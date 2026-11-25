@@ -155,11 +155,13 @@ function vAsk(){
     <div class="note" style="margin:4px 0 0">Играчи, за които питаш (добавя техните числа и програма):</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">${[0,1,2].map(i=>`<input list="pl" data-k="${i}" value="${esc(ASK.picks[i].trim())}" placeholder="Играч ${i+1}" style="flex:1;min-width:140px;font-size:16px">`).join("")}<datalist id="pl">${opts}</datalist></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+     <button id="ans" class="pill" style="display:none;cursor:pointer;background:var(--acc2);color:#062;padding:10px 16px;font-size:14px;border:0">Отговори тук</button>
      <a id="go" class="pill" target="_blank" rel="noopener" style="background:var(--acc);color:#fff;padding:10px 16px;font-size:14px;text-decoration:none">Попитай в Claude →</a>
      <button id="cp" class="pill" style="cursor:pointer;padding:10px 16px;font-size:14px;border:0">Копирай въпроса с данните</button>
      <span id="cpm" class="note" style="margin:0;align-self:center"></span></div>
    </div>
-   <div class="note">Бутонът копира въпроса заедно с данните и отваря нов разговор в Claude. Ако полето е попълнено, само го изпрати. Ако е празно, постави (Paste) копирания текст. Ползва твоя Claude акаунт и малко от лимита.</div></div>
+   <div class="note">В таблото в Claude бутонът „Отговори тук“ дава отговора директно в таба. Извън Claude (GitHub линка) бутонът копира въпроса заедно с данните и отваря нов разговор в Claude. Ако полето е попълнено, само го изпрати. Ако е празно, постави (Paste) копирания текст. Ползва твоя Claude акаунт и малко от лимита.</div></div>
+   <div class="card" id="outc" style="display:none"><h2>Отговор</h2><div id="out" style="white-space:pre-wrap;font-size:15px;line-height:1.55"></div><div class="note">Отговорът е от Claude по данните от таблото към ${new Date(D.generated).toLocaleString("bg-BG")}.</div></div>
    <div class="card"><h3 style="margin-top:0">Какво ще получи Claude</h3><pre id="pv" style="white-space:pre-wrap;font-size:12px;color:var(--mute);margin:0;max-height:40vh;overflow:auto"></pre></div>`;
   const inFrame=(()=>{try{return window.top!==window}catch(e){return true}})();
   if(inFrame)go.removeAttribute("target");
@@ -170,6 +172,24 @@ function vAsk(){
   app.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{let t=presets[+b.dataset.p];const ps=ASK.picks.map(pfind);if(ps[0])t=t.replace("ИГРАЧ1",ps[0].name);if(ps[1])t=t.replace("ИГРАЧ2",ps[1].name);ASK.q=t;aq.value=t;upd()});
   cp.onclick=async()=>{try{await navigator.clipboard.writeText(buildPrompt());cpm.textContent="Копирано ✓"}catch(e){cpm.textContent="Не можах да копирам — маркирай текста отдолу."}};
   upd();
+  // in-page answer (works when opened inside Claude, where the "sample" capability exists)
+  (async()=>{try{if(!window.claude||!claude.use)return;const sample=await claude.use("sample");if(!sample)return;
+    ans.style.display="";go.textContent="Отвори в нов разговор →";
+    let ctl=null;
+    ans.onclick=async()=>{
+      if(ctl){ctl.abort();ctl=null;ans.textContent="Отговори тук";return}
+      ctl=new AbortController();ans.textContent="Спри";outc.style.display="";out.textContent="Мисля…";
+      const tools=[{name:"player_stats",description:"Връща статистика, очаквани точки по кръгове и програма за FPL играч по име (латиница, както е във FPL).",
+        inputSchema:{type:"object",properties:{name:{type:"string"}},required:["name"]},
+        execute:({name})=>{const q=(name||"").toLowerCase();const m=D.players.filter(p=>p.name.toLowerCase().includes(q)).slice(0,3);if(!m.length)throw new Error("Няма такъв играч");return m.map(pctx).join("\n")}},
+       {name:"top_players",description:"Топ 10 играчи по претеглени очаквани точки за позиция (GKP/DEF/MID/FWD) и максимална цена.",
+        inputSchema:{type:"object",properties:{pos:{type:"string"},max_price:{type:"number"}},required:["pos"]},
+        execute:({pos,max_price})=>D.players.filter(p=>p.pos===pos&&p.price<=(max_price||99)).sort((a,b)=>b.xh-a.xh).slice(0,10).map(p=>`${p.name} ${tm(p.team)} £${f1(p.price)} xP ${f1(p.xpts[0])}/${f1(p.xh)}`).join("; ")}];
+      try{const r=await sample(buildPrompt()+"\n\nМожеш да ползваш инструментите player_stats и top_players за други играчи. Пиши без markdown таблици.",{signal:ctl.signal,cache:false,tools,onText:({text})=>{out.textContent=text}});out.textContent=r.text}
+      catch(e){out.textContent=e&&e.code==="not_granted"?"Нямаш разрешение за AI отговори в тази страница.":e&&e.code==="rate_limited"?"Лимитът е достигнат за момента — опитай по-късно.":"Грешка: "+(e&&e.message||e)}
+      finally{ctl=null;ans.textContent="Отговори тук"}
+    };
+  }catch(e){}})();
 }
 
 /* ---------------- My team */
