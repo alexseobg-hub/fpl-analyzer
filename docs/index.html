@@ -192,15 +192,114 @@ function vAsk(){
   }catch(e){}})();
 }
 
+
+/* ---------------- Planner */
+function teamToggle(){return `<div class="ctrl">${[["team","Отбор и трансфери"],["plan","Планер по кръгове"]].map(([k,v])=>`<button class="pill" data-tv="${k}" style="cursor:pointer;padding:8px 14px;border:0;${TV===k?'background:var(--acc);color:#fff':''}">${v}</button>`).join("")}</div>`}
+function bindToggle(){app.querySelectorAll("[data-tv]").forEach(b=>b.onclick=()=>{TV=b.dataset.tv;vTeam()})}
+let PLAN=null;
+function loadPlan(){if(PLAN)return;try{const x=JSON.parse(localStorage.getItem("fpl-plan")||"null");if(x&&x.base===D.next_gw)PLAN=x}catch(e){}if(!PLAN)PLAN={base:D.next_gw,moves:{}};}
+function savePlan(){try{localStorage.setItem("fpl-plan",JSON.stringify(PLAN))}catch(e){}}
+function bestXI(ids,gi){const by={GKP:[],DEF:[],MID:[],FWD:[]};ids.forEach(i=>{const p=P[i];if(p)by[p.pos].push([p.xpts[gi],i])});
+ Object.values(by).forEach(v=>v.sort((a,b)=>b[0]-a[0]));if(!by.GKP.length)return{tot:0,xi:[],cap:null,bench:[]};
+ let xi=[by.GKP[0],...by.DEF.slice(0,3),...by.MID.slice(0,2),...by.FWD.slice(0,1)];
+ const rest=[...by.DEF.slice(3),...by.MID.slice(2),...by.FWD.slice(1)].sort((a,b)=>b[0]-a[0]);const need=11-xi.length;xi=xi.concat(rest.slice(0,need));
+ const bench=[by.GKP[1],...rest.slice(need)].filter(Boolean);
+ const cap=xi.reduce((m,x)=>{const s=x[0]*(["MID","FWD"].includes(P[x[1]].pos)?1.06:1);return s>m.s?{s,x}:m},{s:-1,x:null}).x;
+ return{tot:xi.reduce((s,x)=>s+x[0],0)+(cap?cap[0]:0),xi:xi.map(x=>x[1]),cap:cap?cap[1]:null,bench:bench.map(x=>x[1])}}
+function simulate(){
+  const M=D.me;let squad=[...M.squad],bank=M.bank,ft=M.ft,base=[...M.squad];const rows=[],errs=[];const owned=new Set(squad);
+  D.gws.forEach((g,gi)=>{
+    const mv=(PLAN.moves[g]||[]).filter(m=>m.out&&m.in);let hit=0;
+    mv.forEach(m=>{const o=P[m.out],n=P[m.in];if(!o||!n)return;
+      if(!squad.includes(m.out)){errs.push(`GW${g}: ${o.name} не е в отбора.`);return}
+      if(squad.includes(m.in)){errs.push(`GW${g}: ${n.name} вече е в отбора.`);return}
+      if(o.pos!==n.pos){errs.push(`GW${g}: ${o.name} (${o.pos}) и ${n.name} (${n.pos}) са различни позиции.`);return}
+      squad=squad.map(i=>i===m.out?m.in:i);bank=+(bank+o.price-n.price).toFixed(1)});
+    const tc={};squad.forEach(i=>{tc[P[i].team]=(tc[P[i].team]||0)+1});Object.entries(tc).forEach(([t,c])=>{if(c>3)errs.push(`GW${g}: ${c} играчи от ${tm(+t)} (максимум 3).`)});
+    if(bank<-0.001)errs.push(`GW${g}: бюджетът е на минус (£${f1(bank)}).`);
+    const n=mv.length;hit=Math.max(0,n-ft)*4;const ftUsed=ft;ft=Math.min(5,Math.max(ft-n,0)+1);
+    const b=bestXI(squad,gi),b0=bestXI(base,gi);
+    rows.push({g,gi,n,hit,ft:ftUsed,bank,squad:[...squad],...b,net:b.tot-hit,base:b0.tot});
+  });
+  return{rows,errs};
+}
+function vPlan(){
+  loadPlan();
+  const {rows,errs}=simulate();
+  const order={GKP:0,DEF:1,MID:2,FWD:3};
+  const all=[...new Set(rows.flatMap(r=>r.squad))].sort((a,b)=>order[P[a].pos]-order[P[b].pos]||P[b].xh-P[a].xh);
+  const totNet=sum(rows.map(r=>r.net)),totBase=sum(rows.map(r=>r.base));
+  const opts=D.players.map(p=>`<option value="${esc(p.name)} (${tm(p.team)})">`).join("");
+  const fxOf=(p,gi)=>D.ticker.find(t=>t.id===p.team).fx[gi].map(x=>x.opp+(x.h?"":"(г)")).join("+")||"—";
+  const cell=(i,r)=>{if(!r.squad.includes(i))return `<td style="color:var(--line)">·</td>`;const p=P[i],x=p.xpts[r.gi],inXI=r.xi.includes(i);
+    return `<td style="${inXI?'':'opacity:.45'}"><span class="fx" style="background:${heat(x,1.5,6)};min-width:62px">${fxOf(p,r.gi)}<br>${f1(x)}${r.cap===i?' (C)':''}</span></td>`};
+  const mvRow=(g,m,k)=>{const sq=rows.find(r=>r.g===g);const prev=rows.find(r=>r.g===g-1);const pool=(prev?prev.squad:D.me.squad);
+    return `<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:4px 0">
+     <select data-g="${g}" data-k="${k}" data-f="out" style="font-size:15px;padding:6px;border:1px solid var(--line);border-radius:7px;background:var(--card);color:var(--ink)"><option value="">Продай…</option>${pool.map(i=>`<option value="${i}" ${m.out==i?"selected":""}>${esc(P[i].name)} (${P[i].pos} £${f1(P[i].price)})</option>`).join("")}</select>
+     → <input list="plp" data-g="${g}" data-k="${k}" data-f="in" value="${m.in?esc(P[m.in].name+" ("+tm(P[m.in].team)+")"):""}" placeholder="Купи…" style="font-size:15px;padding:6px;border:1px solid var(--line);border-radius:7px;background:var(--card);color:var(--ink);min-width:150px">
+     <button data-g="${g}" data-k="${k}" data-del="1" class="pill" style="cursor:pointer;border:0">✕</button></div>`};
+  app.innerHTML=`${teamToggle()}
+  <div class="kpis">
+   <div class="kpi"><span>xP за ${D.gws.length} кръга с плана (след хитове)</span><b>${f1(totNet)}</b></div>
+   <div class="kpi"><span>Без трансфери</span><b>${f1(totBase)}</b></div>
+   <div class="kpi"><span>Разлика</span><b class="${totNet-totBase>0?'good':totNet-totBase<0?'bad':''}">${totNet-totBase>0?"+":""}${f1(totNet-totBase)}</b></div>
+   <div class="kpi"><span>Банка накрая</span><b>£${f1(rows[rows.length-1].bank)}</b></div>
+  </div><br>
+  ${errs.length?`<div class="card" style="border-color:var(--bad)">${errs.map(e=>`<div class="bad">✖ ${esc(e)}</div>`).join("")}</div>`:""}
+  <div class="card"><h2>Трансфери по кръгове</h2><datalist id="plp">${opts}</datalist>
+   ${rows.map(r=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>GW${r.g}</b> <span class="note">свободни: ${r.ft} · ${r.n?`${r.n} трансфер${r.n>1?"а":""}`:"без трансфер"}${r.hit?` · <span class="bad">−${r.hit}</span>`:""} · банка £${f1(r.bank)} · xP ${f1(r.tot)}</span>
+     ${(PLAN.moves[r.g]||[]).map((m,k)=>mvRow(r.g,m,k)).join("")}
+     <button data-add="${r.g}" class="pill" style="cursor:pointer;border:0;margin-top:4px">+ трансфер</button></div>`).join("")}
+   <div class="ctrl" style="margin-top:10px"><button id="pclr" class="pill" style="cursor:pointer;border:0">Изчисти плана</button>
+    <button id="psug" class="pill" style="cursor:pointer;border:0">Вземи най-добрия трансфер за GW${D.next_gw}</button></div>
+   <div class="note">Планът се пази само в този браузър. Цената за продажба е приблизително текущата. Свободните трансфери се натрупват до 5.</div></div>
+  <div class="card"><h2>Програма и xP на отбора по кръгове</h2><div class="scroll"><table><thead><tr><th class="l">Играч</th>${rows.map(r=>`<th>GW${r.g}</th>`).join("")}</tr></thead><tbody>
+   ${all.map(i=>`<tr><td class="l">${esc(P[i].name)} <span class="pill">${P[i].pos}</span></td>${rows.map(r=>cell(i,r)).join("")}</tr>`).join("")}
+   <tr><td class="l"><b>Отбор (XI + C)</b></td>${rows.map(r=>`<td><b>${f1(r.tot)}</b>${r.hit?`<br><span class="bad">−${r.hit}</span>`:""}</td>`).join("")}</tr>
+   <tr><td class="l" style="color:var(--mute)">Без трансфери</td>${rows.map(r=>`<td style="color:var(--mute)">${f1(r.base)}</td>`).join("")}</tr>
+  </tbody></table></div><div class="note">Всяка клетка показва съперника и очакваните точки, а цветът е колко е добър мачът за играча. Бледите са на пейката, (C) е капитанът. Стартовият състав и капитанът се избират автоматично за всеки кръг.</div></div>
+  <div class="card"><h2>AI оценка на плана</h2>
+   <div class="ctrl"><button id="pai" class="pill" style="display:none;cursor:pointer;background:var(--acc2);color:#062;padding:10px 16px;border:0">Оцени плана</button>
+   <a id="pgo" class="pill" target="_blank" rel="noopener" style="background:var(--acc);color:#fff;padding:10px 16px;text-decoration:none">Оцени в Claude →</a><span id="pmsg" class="note" style="margin:0"></span></div>
+   <div id="pout" style="white-space:pre-wrap;font-size:15px;line-height:1.55"></div></div>`;
+  bindToggle();
+  const redraw=()=>{savePlan();vPlan()};
+  app.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{const g=+b.dataset.add;(PLAN.moves[g]=PLAN.moves[g]||[]).push({out:null,in:null});redraw()});
+  app.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{PLAN.moves[+b.dataset.g].splice(+b.dataset.k,1);redraw()});
+  app.querySelectorAll("select[data-f]").forEach(el=>el.onchange=()=>{PLAN.moves[+el.dataset.g][+el.dataset.k].out=+el.value||null;redraw()});
+  app.querySelectorAll("input[data-f]").forEach(el=>el.onchange=()=>{const p=pfind(el.value);PLAN.moves[+el.dataset.g][+el.dataset.k].in=p?p.id:null;redraw()});
+  pclr.onclick=()=>{PLAN={base:D.next_gw,moves:{}};redraw()};
+  psug.onclick=()=>{const m=D.me.transfers.one[0];if(m){(PLAN.moves[D.next_gw]=PLAN.moves[D.next_gw]||[]).push({out:m.out[0],in:m.in[0]});redraw()}};
+  const prompt=()=>{const lines=rows.map(r=>`GW${r.g}: ${(PLAN.moves[r.g]||[]).filter(m=>m.out&&m.in).map(m=>`${P[m.out].name}→${P[m.in].name}`).join(", ")||"без трансфер"}; хит ${r.hit}; банка £${f1(r.bank)}; xP отбор ${f1(r.tot)} (без трансфери ${f1(r.base)}); капитан ${P[r.cap]?.name}`).join("\n");
+    const ins=[...new Set(Object.values(PLAN.moves).flat().filter(m=>m.in).map(m=>m.in))].map(i=>pctx(P[i])).join("\n");
+    return `Ти си опитен FPL играч. Оцени моя план за трансфери за следващите ${D.gws.length} кръга: силни страни, рискове (ротация, контузии, цени, програма), дали има по-добър ред на ходовете и дали хитовете си струват. Дай оценка от 1 до 10 и конкретни промени. Отговори кратко на български, без таблици.
+
+ПЛАН:
+${lines}
+Общо xP с плана ${f1(totNet)} срещу ${f1(totBase)} без трансфери.
+${errs.length?"Грешки в плана: "+errs.join("; "):""}
+Купувани играчи:
+${ins||"няма"}
+Моят текущ отбор: ${D.me.squad.map(i=>`${P[i].name} ${tm(P[i].team)} ${P[i].pos} £${f1(P[i].price)}${P[i].news?" ⚠"+P[i].news:""}`).join("; ")}. Банка £${f1(D.me.bank)}, свободни трансфери ${D.me.ft}, чипове до GW19: ${D.me.chips_left.map(c=>c.name).join(", ")||"няма"}.
+${AI?"Дневни AI изводи: "+AI.summary.slice(0,500):""}`};
+  const inFrame=(()=>{try{return window.top!==window}catch(e){return true}})();if(inFrame)pgo.removeAttribute("target");
+  pgo.href="https://claude.ai/new?q="+encodeURIComponent(prompt().slice(0,6000));
+  pgo.onclick=()=>{try{navigator.clipboard.writeText(prompt()).then(()=>{pmsg.textContent="Копирано ✓ — ако полето в Claude е празно, постави го."}).catch(()=>{})}catch(e){}};
+  (async()=>{try{if(!window.claude||!claude.use)return;const sample=await claude.use("sample");if(!sample)return;pai.style.display="";pgo.textContent="Отвори в нов разговор →";
+    pai.onclick=async()=>{pai.disabled=true;pout.textContent="Мисля…";try{const r=await sample(prompt(),{cache:false,onText:({text})=>{pout.textContent=text}});pout.textContent=r.text}catch(e){pout.textContent=e&&e.code==="rate_limited"?"Лимитът е достигнат — опитай по-късно.":"Грешка: "+(e&&e.message||e)}finally{pai.disabled=false}}}catch(e){}})();
+}
+
 /* ---------------- My team */
+let TV="team";
 function vTeam(){
+  if(TV==="plan")return vPlan();
   const M=D.me, pl=M.plan[0], xi=new Set(pl.xi);
   const order={GKP:0,DEF:1,MID:2,FWD:3};
   const sq=[...M.squad].sort((a,b)=>(xi.has(b)-xi.has(a))||order[P[a].pos]-order[P[b].pos]||P[b].xpts[0]-P[a].xpts[0]);
   const chips=M.chips_left.map(c=>({wildcard:"Wildcard",freehit:"Free Hit",bboost:"Bench Boost","3xc":"Triple Captain"}[c.name])).join(", ")||"няма";
   const row=i=>{const p=P[i];return `<tr class="${p.avail<.75?'inj':''}"><td class="l">${esc(p.name)}${i===pl.cap?'<span class="cap">C</span>':''}${i===pl.vice?'<span class="vc">V</span>':''}${flag(p)}</td><td class="l">${pos(p.pos)}</td><td class="l">${tm(p.team)}</td><td>£${f1(p.price)}</td>${xcells(p)}<td><b>${f1(p.xh)}</b></td></tr>`};
   const mv=(m)=>`<div class="move"><div>${m.out.map(i=>`<span class="bad">↓ ${esc(nm(i))}</span> <span class="pill">£${f1(P[i].price)}</span>`).join("<br>")}</div><div>${m.in.map(i=>`<span class="good">↑ ${esc(nm(i))}</span> <span class="pill">${tm(P[i].team)} £${f1(P[i].price)}</span>`).join("<br>")}</div><div style="text-align:right"><b class="${m.net>0?'good':'bad'}">${m.net>0?'+':''}${f2(m.net)}</b><div class="note" style="margin:0">${m.hit?`−${m.hit} хит · `:''}банка £${f1(m.bank)}</div></div></div>`;
-  app.innerHTML=`
+  app.innerHTML=`${teamToggle()}
   <div class="kpis">
     <div class="kpi"><span>Общ ранг</span><b>${M.overall_rank.toLocaleString("bg-BG")}</b></div>
     <div class="kpi"><span>Точки</span><b>${M.points}</b></div>
@@ -218,6 +317,7 @@ function vTeam(){
    <div class="card"><h2>Най-добри 2 трансфера</h2>${M.transfers.two.slice(0,8).map(mv).join("")}</div>
   </div>
   <div class="note">Печалбата е в очаквани точки за следващите ${D.gws.length} кръга (по-близките кръгове тежат повече), без хитовете. Цените за продажба са по текущата цена, защото публичното API не показва покупната. Отборът е последният публикуван (GW${D.current_gw}), така че трансфери, направени след това, не се виждат до дедлайна. *Свободните трансфери са изчислени от историята.</div>`;
+  bindToggle();
 }
 
 /* ---------------- Captain */
