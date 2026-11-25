@@ -66,7 +66,7 @@ td.l,th.l{text-align:left}tr:hover td{background:var(--chip)}
 </header>
 <main id="app"></main>
 <script>
-const TABS=[["advice","Съвети"],["team","Моят отбор"],["cap","Капитан"],["players","Играчи"],["compare","Сравнение"],["fx","Програма"],["price","Цени"],["league","Минилиги"]];
+const TABS=[["advice","Съвети"],["team","Моят отбор"],["cap","Капитан"],["players","Играчи"],["compare","Сравнение"],["fx","Програма"],["price","Цени"],["league","Минилиги"],["ask","Попитай AI"]];
 let D,P,T,AI=null,tab=location.hash.slice(1)||"advice";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const f1=x=>x==null?"–":(+x).toFixed(1), f2=x=>x==null?"–":(+x).toFixed(2);
@@ -94,7 +94,7 @@ async function load(){
 }
 function render(){
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.k===tab));
-  ({advice:vAdvice,team:vTeam,cap:vCap,players:vPlayers,compare:vCompare,fx:vFx,price:vPrice,league:vLeague}[tab]||vTeam)();
+  ({advice:vAdvice,team:vTeam,cap:vCap,players:vPlayers,compare:vCompare,fx:vFx,price:vPrice,league:vLeague,ask:vAsk}[tab]||vTeam)();
 }
 const gwHead=()=>D.gws.map(g=>`<th>GW${g}</th>`).join("");
 function xcells(p){return p.xpts.map(x=>`<td style="color:${x>=5?'var(--acc2)':x<2?'var(--mute)':'inherit'}">${f1(x)}</td>`).join("")}
@@ -117,6 +117,56 @@ function vAdvice(){
    <div class="note">Трансфер се препоръчва, ако носи поне 2.5 очаквани точки за ${D.gws.length} кръга (претеглено), а хит само ако нетната печалба е ясно по-голяма от тази на единичния трансфер.</div></div>
    <div class="card"><h2>Новини от FPL</h2><table><tbody>${D.news.map(n=>`<tr><td class="l">${n.mine?"⭐ ":""}<b>${esc(nm(n.id))}</b> <span class="pill">${tm(P[n.id]?.team)}</span></td><td class="l" style="white-space:normal">${esc(n.text)}</td><td>${n.added?new Date(n.added).toLocaleDateString("bg-BG"):""}</td></tr>`).join("")||'<tr><td class="l">Няма новини.</td></tr>'}</tbody></table>
    <div class="note">⭐ = твой играч. Показват се новини за твоите играчи, за целите на трансферите и за играчи с над 10% притежание.</div></div>`;
+}
+
+
+/* ---------------- Ask AI */
+let ASK={q:"",picks:["",""," "]};
+function pfind(v){v=(v||"").trim().toLowerCase();if(!v)return null;return D.players.find(p=>`${p.name} (${tm(p.team)})`.toLowerCase()===v)||D.players.find(p=>p.name.toLowerCase()===v)||null}
+function pctx(p){const f=D.ticker.find(t=>t.id===p.team).fx.map((g,i)=>`GW${D.gws[i]}:${g.map(x=>x.opp+(x.h?"(д)":"(г)")).join("+")||"няма"}`).join(" ");
+ return `- ${p.name} (${tm(p.team)}, ${p.pos}, £${f1(p.price)}, притежание ${f1(p.own)}%): точки ${p.pts}, форма ${f1(p.form)}, последни 5: ${p.form5.join("/")}; мин ${p.mins}, G/A ${p.g}/${p.a}, xG90 ${f2(p.xg90)}, xA90 ${f2(p.xa90)}, очаквани мин ${Math.round(p.xmin)}; xPts по кръгове [${p.xpts.map(f1).join(", ")}], претеглено ${D.gws.length}GW ${f1(p.xh)}; цена Δ% ${Math.round(p.pc_pct)}${p.pen?`; дузпи №${p.pen}`:""}${p.news?`; новина: ${p.news}`:""}. Програма: ${f}`}
+function buildPrompt(){
+  const M=D.me, picks=ASK.picks.map(pfind).filter(Boolean);
+  const sq=M.squad.map(i=>P[i]).map(p=>`${p.name} ${tm(p.team)} ${p.pos} £${f1(p.price)} xP:${f1(p.xpts[0])}/${f1(p.xh)}${M.plan[0].xi.includes(p.id)?"":" (резерва)"}${p.news?" ⚠"+p.news:""}`).join("; ");
+  const tr=M.transfers.one.slice(0,5).map(m=>`${nm(m.out[0])}→${nm(m.in[0])} +${f1(m.gain)}`).join("; ");
+  const adv=D.advice.map(a=>"- "+a.text).join("\n");
+  const ai=AI?`\nДневни AI изводи (${AI.generated}): ${AI.summary}`:"";
+  return `Ти си опитен FPL играч. Отговори кратко и конкретно на български, с ясна препоръка и защо. Ползвай данните по-долу (моят модел за очаквани точки), но кажи, ако нещо важно не се вижда от тях. Ако имаш уеб търсене, провери последните новини за споменатите играчи преди дедлайна.
+
+ВЪПРОС: ${ASK.q||"(виж играчите по-долу)"}
+
+Контекст (данни от ${D.generated}, следващ кръг GW${D.next_gw}, дедлайн ${D.deadline}):
+Моят отбор: ${sq}
+Банка £${f1(M.bank)}, свободни трансфери ${M.ft}, чипове до GW19: ${M.chips_left.map(c=>c.name).join(", ")||"няма"}. Ранг ${M.overall_rank}.
+Най-добри единични трансфери по модела (претеглени xPts за ${D.gws.length} кръга): ${tr}
+${picks.length?"Играчи във въпроса:\n"+picks.map(pctx).join("\n"):""}
+Съвети по правила:
+${adv}${ai}
+
+Бележки: xP X/Y = следващ кръг / претеглено за ${D.gws.length} кръга (по-близките тежат повече). Цената за продажба е приблизително текущата.`;
+}
+function vAsk(){
+  const opts=D.players.map(p=>`<option value="${esc(p.name)} (${tm(p.team)})">`).join("");
+  const presets=["Да направя ли трансфер ИГРАЧ1 → ИГРАЧ2?","Кого да сложа за капитан този кръг?","Да пазя ли трансфера или да правя хит?","Кога е най-добре да играя Free Hit?"];
+  app.innerHTML=`<div class="card"><h2>Попитай AI</h2>
+   <div class="ctrl" style="flex-direction:column;align-items:stretch">
+    <textarea id="aq" rows="3" placeholder="Например: Да взема ли Wirtz вместо Palmer?" style="font:inherit;font-size:16px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)">${esc(ASK.q)}</textarea>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">${presets.map((p,i)=>`<button class="pill" data-p="${i}" style="cursor:pointer;padding:6px 10px;border:0">${esc(p)}</button>`).join("")}</div>
+    <div class="note" style="margin:4px 0 0">Играчи, за които питаш (добавя техните числа и програма):</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">${[0,1,2].map(i=>`<input list="pl" data-k="${i}" value="${esc(ASK.picks[i].trim())}" placeholder="Играч ${i+1}" style="flex:1;min-width:140px;font-size:16px">`).join("")}<datalist id="pl">${opts}</datalist></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+     <a id="go" class="pill" target="_blank" rel="noopener" style="background:var(--acc);color:#fff;padding:10px 16px;font-size:14px;text-decoration:none">Попитай в Claude →</a>
+     <button id="cp" class="pill" style="cursor:pointer;padding:10px 16px;font-size:14px;border:0">Копирай въпроса с данните</button>
+     <span id="cpm" class="note" style="margin:0;align-self:center"></span></div>
+   </div>
+   <div class="note">Бутонът отваря нов разговор в Claude с попълнен въпрос и данните от таблото. Прегледай го и го изпрати. Ползва твоя Claude акаунт и малко от лимита. Ако не се попълни автоматично, ползвай „Копирай“ и го постави в Claude.</div></div>
+   <div class="card"><h3 style="margin-top:0">Какво ще получи Claude</h3><pre id="pv" style="white-space:pre-wrap;font-size:12px;color:var(--mute);margin:0;max-height:40vh;overflow:auto"></pre></div>`;
+  const upd=()=>{const t=buildPrompt();pv.textContent=t;go.href="https://claude.ai/new?q="+encodeURIComponent(t.slice(0,12000))};
+  aq.oninput=e=>{ASK.q=e.target.value;upd()};
+  app.querySelectorAll("input[data-k]").forEach(el=>el.oninput=e=>{ASK.picks[+el.dataset.k]=e.target.value;upd()});
+  app.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{let t=presets[+b.dataset.p];const ps=ASK.picks.map(pfind);if(ps[0])t=t.replace("ИГРАЧ1",ps[0].name);if(ps[1])t=t.replace("ИГРАЧ2",ps[1].name);ASK.q=t;aq.value=t;upd()});
+  cp.onclick=async()=>{try{await navigator.clipboard.writeText(buildPrompt());cpm.textContent="Копирано ✓"}catch(e){cpm.textContent="Не можах да копирам — маркирай текста отдолу."}};
+  upd();
 }
 
 /* ---------------- My team */
