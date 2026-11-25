@@ -66,7 +66,7 @@ td.l,th.l{text-align:left}tr:hover td{background:var(--chip)}
 </header>
 <main id="app"></main>
 <script>
-const TABS=[["advice","Съвети"],["team","Моят отбор"],["cap","Капитан"],["players","Играчи"],["compare","Сравнение"],["fx","Програма"],["price","Цени"],["league","Минилиги"],["ask","Попитай AI"]];
+const TABS=[["advice","Съвети"],["ask","Попитай AI"],["team","Моят отбор"],["cap","Капитан"],["players","Играчи"],["compare","Сравнение"],["fx","Програма"],["price","Цени"],["league","Минилиги"]];
 let D,P,T,AI=null,tab=location.hash.slice(1)||"advice";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const f1=x=>x==null?"–":(+x).toFixed(1), f2=x=>x==null?"–":(+x).toFixed(2);
