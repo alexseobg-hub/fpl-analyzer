@@ -24,6 +24,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install optimizer
+        run: pip install "pulp<3"
       - name: Build data.json from the FPL API
         run: python engine/build.py
       - uses: actions/configure-pages@v5

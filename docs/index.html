@@ -46,6 +46,10 @@ td.l,th.l{text-align:left}tr:hover td{background:var(--chip)}
 .bar i{display:block;height:100%}
 .inj{opacity:.55}
 .card{overflow-x:auto}
+.rcard .gs{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.gauge{display:flex;align-items:center;gap:12px}.gauge b{display:block;font-size:15px}.gauge small{color:var(--mute);font-size:12px}
+.rc{margin-top:10px;padding:10px 12px;background:var(--chip);border-radius:10px;font-size:14px}
+
 .plan-top{display:flex;gap:8px;flex-wrap:wrap;align-items:stretch}
 .gwnav{display:flex;align-items:center;gap:6px;background:var(--acc);color:#fff;border-radius:12px;padding:6px}
 .gwnav>div{text-align:center;min-width:86px}.gwnav b{display:block;font-size:20px}.gwnav small{font-size:11px;opacity:.85}
@@ -149,6 +153,15 @@ const gwHead=()=>D.gws.map(g=>`<th>GW${g}</th>`).join("");
 function xcells(p){return p.xpts.map(x=>`<td style="color:${x>=5?'var(--acc2)':x<2?'var(--mute)':'inherit'}">${f1(x)}</td>`).join("")}
 
 
+
+/* ---------------- Ratings */
+function gauge(v,label,sub){const r=34,c=2*Math.PI*r,pct=v==null?0:v/100;const col=v==null?"var(--line)":v>=80?"var(--acc2)":v>=60?"#84cc16":v>=40?"var(--warn)":"var(--bad)";
+ return `<div class="gauge"><svg width="86" height="86" viewBox="0 0 86 86" aria-hidden="true"><circle cx="43" cy="43" r="${r}" fill="none" stroke="var(--chip)" stroke-width="9"/><circle cx="43" cy="43" r="${r}" fill="none" stroke="${col}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${c*pct} ${c}" transform="rotate(-90 43 43)"/><text x="43" y="49" text-anchor="middle" font-size="22" font-weight="800" fill="currentColor">${v==null?"–":v}</text></svg><div><b>${label}</b><small>${sub}</small></div></div>`}
+function ratingsCard(){const R=D.ratings;if(!R)return "";const word=v=>v>=85?"отличен":v>=70?"много добър":v>=55?"добър":v>=40?"среден":"слаб";
+ const ai=AI&&AI.rating_comment?`<div class="rc">${esc(AI.rating_comment)}</div>`:"";
+ return `<div class="card rcard"><div class="gs">${gauge(R.gw,`Отборът за GW${D.next_gw}: ${word(R.gw)}`,`${f1(R.gw_my)} от ${f1(R.gw_best)} възможни очаквани точки`)}${gauge(R.outlook,`Следващите ${R.horizon} кръга: ${word(R.outlook)}`,`${f1(R.out_my)} от ${f1(R.out_best)} без трансфери`)}</div>${ai}
+ <div class="note">Оценка от 0 до 100 спрямо най-добрия възможен отбор за твоя бюджет (£${f1(D.me.value+D.me.bank)}), сметнат от модела. 100 = колкото оптималния отбор, 0 = под 60% от него.</div></div>`}
+
 /* ---------------- Advice */
 function vAdvice(){
   const ic={good:"✔",warn:"!",bad:"✖",info:"i"};
@@ -161,7 +174,7 @@ function vAdvice(){
     <div class="note">Генерирано: ${fresh?fresh.toLocaleString("bg-BG"):"–"} · от Claude по новини, събрани с Firecrawl, и данните по-долу. Проверявай новините преди дедлайна.</div></div>`
     :`<div class="card"><h2>AI изводи</h2><div class="note" style="margin:0">Още няма. Ще се появят след първото дневно пускане на AI задачата.</div></div>`;
   const col={good:"var(--acc2)",warn:"var(--warn)",bad:"var(--bad)",info:"var(--mute)"};
-  app.innerHTML=aiBlock+`<div class="card"><h2>Съвети по правила (от модела)</h2>
+  app.innerHTML=ratingsCard()+aiBlock+`<div class="card"><h2>Съвети по правила (от модела)</h2>
    ${cats.map(c=>`<h3>${esc(c)}</h3>${D.advice.filter(a=>a.cat===c).map(a=>`<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)"><b style="color:${col[a.lvl]};width:14px;text-align:center">${ic[a.lvl]}</b><span>${esc(a.text)}</span></div>`).join("")}`).join("")}
    <div class="note">Трансфер се препоръчва, ако носи поне 2.5 очаквани точки за ${D.gws.length} кръга (претеглено), а хит само ако нетната печалба е ясно по-голяма от тази на единичния трансфер.</div></div>
    <div class="card"><h2>Новини от FPL</h2><table><tbody>${D.news.map(n=>`<tr><td class="l">${n.mine?"⭐ ":""}<b>${esc(nm(n.id))}</b> <span class="pill">${tm(P[n.id]?.team)}</span></td><td class="l" style="white-space:normal">${esc(n.text)}</td><td>${n.added?new Date(n.added).toLocaleDateString("bg-BG"):""}</td></tr>`).join("")||'<tr><td class="l">Няма новини.</td></tr>'}</tbody></table>
@@ -414,7 +427,7 @@ function vTeam(){
   const chips=M.chips_left.map(c=>({wildcard:"Wildcard",freehit:"Free Hit",bboost:"Bench Boost","3xc":"Triple Captain"}[c.name])).join(", ")||"няма";
   const row=i=>{const p=P[i];return `<tr class="${p.avail<.75?'inj':''}"><td class="l">${esc(p.name)}${i===pl.cap?'<span class="cap">C</span>':''}${i===pl.vice?'<span class="vc">V</span>':''}${flag(p)}</td><td class="l">${pos(p.pos)}</td><td class="l">${tm(p.team)}</td><td>£${f1(p.price)}</td>${xcells(p)}<td><b>${f1(p.xh)}</b></td></tr>`};
   const mv=(m)=>`<div class="move"><div>${m.out.map(i=>`<span class="bad">↓ ${esc(nm(i))}</span> <span class="pill">£${f1(P[i].price)}</span>`).join("<br>")}</div><div>${m.in.map(i=>`<span class="good">↑ ${esc(nm(i))}</span> <span class="pill">${tm(P[i].team)} £${f1(P[i].price)}</span>`).join("<br>")}</div><div style="text-align:right"><b class="${m.net>0?'good':'bad'}">${m.net>0?'+':''}${f2(m.net)}</b><div class="note" style="margin:0">${m.hit?`−${m.hit} хит · `:''}банка £${f1(m.bank)}</div></div></div>`;
-  app.innerHTML=`${teamToggle()}
+  app.innerHTML=`${teamToggle()}${ratingsCard()}
   <div class="kpis">
     <div class="kpi"><span>Общ ранг</span><b>${M.overall_rank.toLocaleString("bg-BG")}</b></div>
     <div class="kpi"><span>Точки</span><b>${M.points}</b></div>

@@ -9,9 +9,26 @@
     "Free Hit изгаря след GW19 и остава неизползван — следи за празни или двойни кръгове около Коледа."
   ],
   "players": [
-    {"name": "Raya", "note": "Контузия в рамото срещу Нюкасъл, пропусна мача с Дортмунд. Артета: не е сериозно, без операция, може да се върне срещу Сити. FPL: 50%. Над 200 хил. мениджъри вече го продадоха.", "url": "https://www.theguardian.com/football/2026/nov/23/david-raya-shoulder-injury-arsenal-surgery-mikel-arteta"},
-    {"name": "Kepa", "note": "Заместникът на Raya (£4.9). Има смисъл само ако Raya е аут за повече от един мач.", "url": "https://onefpl.com/blog/david-raya-injury-fpl-gw12-replacements-november-2026"},
-    {"name": "Muharemović / Trafford", "note": "Fantasy Football Scout предлагат тройка от Лийдс за GW12 (у дома срещу Ковънтри) и без Хааланд в ранните си избори.", "url": "https://www.fantasyfootballscout.co.uk/2026/11/23/fpl-gameweek-12-early-scout-picks-leeds-triple-up-no-haaland"},
-    {"name": "Calafiori", "note": "Бележките на Fantasy Football Scout от днес споменават почивка за Calafiori — риск от ротация. При теб и без това е на пейката.", "url": "https://www.fantasyfootballscout.co.uk/2026/11/25/fpl-notes-raya-latest-calafiori-rest-still-no-saliba-minutes"}
-  ]
+    {
+      "name": "Raya",
+      "note": "Контузия в рамото срещу Нюкасъл, пропусна мача с Дортмунд. Артета: не е сериозно, без операция, може да се върне срещу Сити. FPL: 50%. Над 200 хил. мениджъри вече го продадоха.",
+      "url": "https://www.theguardian.com/football/2026/nov/23/david-raya-shoulder-injury-arsenal-surgery-mikel-arteta"
+    },
+    {
+      "name": "Kepa",
+      "note": "Заместникът на Raya (£4.9). Има смисъл само ако Raya е аут за повече от един мач.",
+      "url": "https://onefpl.com/blog/david-raya-injury-fpl-gw12-replacements-november-2026"
+    },
+    {
+      "name": "Muharemović / Trafford",
+      "note": "Fantasy Football Scout предлагат тройка от Лийдс за GW12 (у дома срещу Ковънтри) и без Хааланд в ранните си избори.",
+      "url": "https://www.fantasyfootballscout.co.uk/2026/11/23/fpl-gameweek-12-early-scout-picks-leeds-triple-up-no-haaland"
+    },
+    {
+      "name": "Calafiori",
+      "note": "Бележките на Fantasy Football Scout от днес споменават почивка за Calafiori — риск от ротация. При теб и без това е на пейката.",
+      "url": "https://www.fantasyfootballscout.co.uk/2026/11/25/fpl-notes-raya-latest-calafiori-rest-still-no-saliba-minutes"
+    }
+  ],
+  "rating_comment": "Отборът е солиден в защита и халфовата линия (Лийдс и Брайтън имат добра програма), но губи точки на две места: вратарят (Raya е 50%, а Dubravka не играе) и £9.8, заключени в Palmer на пейката. Оправиш ли тези двете, оценката се вдига осезаемо."
 }

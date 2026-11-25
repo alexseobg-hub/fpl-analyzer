@@ -398,6 +398,73 @@ for t, tm in TEAMS.items():
                    "att": round(ATT[t], 2), "def": round(DEF[t], 2)})
 
 os.makedirs(os.path.join(ROOT, "docs"), exist_ok=True)
+# ------------------------------------------------------------------ team ratings (0-100) vs optimal squad
+def optimal_value(gis, budget):
+    """Best possible xP (XI + captain + 0.1*bench) for a fixed 15-man squad over GW indexes gis."""
+    try:
+        import pulp
+    except ImportError:
+        return None
+    pool = [p for p in players if p["avail"] > 0 or p["mins"] > 0]
+    prob = pulp.LpProblem("opt", pulp.LpMaximize)
+    x = {p["id"]: pulp.LpVariable(f"x{p['id']}", cat="Binary") for p in pool}
+    y = {(p["id"], g): pulp.LpVariable(f"y{p['id']}_{g}", cat="Binary") for p in pool for g in gis}
+    c = {(p["id"], g): pulp.LpVariable(f"c{p['id']}_{g}", cat="Binary") for p in pool for g in gis}
+    prob += pulp.lpSum(p["xpts"][g] * (y[p["id"], g] + c[p["id"], g]) + 0.1 * p["xpts"][g] * (x[p["id"]] - y[p["id"], g])
+                       for p in pool for g in gis)
+    prob += pulp.lpSum(p["price"] * x[p["id"]] for p in pool) <= budget
+    for pos, n in (("GKP", 2), ("DEF", 5), ("MID", 5), ("FWD", 3)):
+        prob += pulp.lpSum(x[p["id"]] for p in pool if p["pos"] == pos) == n
+    for t in TEAMS:
+        prob += pulp.lpSum(x[p["id"]] for p in pool if p["team"] == t) <= 3
+    for g in gis:
+        prob += pulp.lpSum(y[p["id"], g] for p in pool) == 11
+        prob += pulp.lpSum(c[p["id"], g] for p in pool) == 1
+        for pos, lo, hi in (("GKP", 1, 1), ("DEF", 3, 5), ("MID", 2, 5), ("FWD", 1, 3)):
+            s = pulp.lpSum(y[p["id"], g] for p in pool if p["pos"] == pos)
+            prob += s >= lo
+            prob += s <= hi
+        for p in pool:
+            prob += y[p["id"], g] <= x[p["id"]]
+            prob += c[p["id"], g] <= y[p["id"], g]
+    solver = pulp.PULP_CBC_CMD(msg=False, timeLimit=60) if pulp.PULP_CBC_CMD().available() else pulp.HiGHS(msg=False, timeLimit=60)
+    prob.solve(solver)
+    if pulp.LpStatus[prob.status] not in ("Optimal", "Not Solved") and prob.status != 1:
+        return None
+    squad_ids = [pid for pid, v in x.items() if (v.value() or 0) > 0.5]
+    return pulp.value(prob.objective), squad_ids
+
+
+def my_value(ids, gis):
+    tot = 0.0
+    for g in gis:
+        t, _, _, b = best_xi(ids, g)
+        tot += t + 0.1 * b
+    return tot
+
+
+def rating(my, best):
+    # 100 = as good as the optimal squad for your budget; the floor (0) is set at 60% of optimal,
+    # which is roughly a weak, poorly-structured team.
+    if not best:
+        return None
+    return max(0, min(100, round((my / best - 0.6) / 0.4 * 100)))
+
+
+budget_total = eh["value"] / 10 + bank
+ratings = None
+try:
+    o1 = optimal_value([0], budget_total)
+    o5 = optimal_value(list(range(min(5, len(gws)))), budget_total)
+    if o1 and o5:
+        m1, m5 = my_value(squad, [0]), my_value(squad, list(range(min(5, len(gws)))))
+        ratings = {"gw": rating(m1, o1[0]), "outlook": rating(m5, o5[0]),
+                   "gw_my": round(m1, 1), "gw_best": round(o1[0], 1),
+                   "out_my": round(m5, 1), "out_best": round(o5[0], 1), "horizon": min(5, len(gws)),
+                   "best_squad": o5[1]}
+except Exception as e:  # noqa
+    print("ratings failed:", e, file=sys.stderr)
+
 # ------------------------------------------------------------------ rule-based advisor
 CHIP_BG = {"wildcard": "Wildcard", "freehit": "Free Hit", "bboost": "Bench Boost", "3xc": "Triple Captain"}
 THRESH = 2.5  # weighted xPts over horizon needed to justify spending a free transfer
@@ -502,6 +569,7 @@ news = news[:40]
 digest = {
     "deadline": nxt["deadline_time"] if nxt else None, "next_gw": next_ev, "ft": ft, "bank": bank,
     "verdict": verdict["action"], "advice": [a["text"] for a in advice],
+    "ratings": {k: v for k, v in (ratings or {}).items() if k != "best_squad"},
     "squad": [{"name": P[i]["name"], "team": TEAMS[P[i]["team"]]["short_name"], "pos": P[i]["pos"], "price": P[i]["price"],
                "xp_next": P[i]["xpts"][0], "xp6": P[i]["xh"], "start": i in xi0, "news": P[i]["news"]} for i in squad],
     "targets": [{"name": nm_(i), "team": TEAMS[P[i]["team"]]["short_name"], "price": P[i]["price"], "xp6": P[i]["xh"]}
@@ -515,7 +583,7 @@ with open(os.path.join(ROOT, "docs", "digest.json"), "w", encoding="utf-8") as f
     json.dump(digest, f, ensure_ascii=False, separators=(",", ":"))
 
 out = {
-    "advice": advice, "verdict": verdict, "news": news,
+    "advice": advice, "verdict": verdict, "news": news, "ratings": ratings,
     "generated": datetime.now(timezone.utc).isoformat(timespec="minutes"),
     "current_gw": cur_ev, "next_gw": next_ev, "deadline": nxt["deadline_time"] if nxt else None,
     "gws": gws, "weights": WEIGHTS[: len(gws)], "league_avg_xg": round(MU, 2),
