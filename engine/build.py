@@ -186,7 +186,7 @@ for e in els.values():
         continue
     pos = POS[e["element_type"]]
     pm = player_model(e) if e["id"] in summaries else {
-        "xpts": [0.0] * len(gws), "xmin": 0, "avail": 0, "xg90": 0, "xa90": 0, "form5": [], "dc_rate": 0}
+        "xpts": [0.0] * len(gws), "xmin": 0, "avail": 1.0 if e["status"] == "a" else 0, "xg90": 0, "xa90": 0, "form5": [], "dc_rate": 0}
     players.append({
         "id": e["id"], "name": e["web_name"], "team": e["team"], "pos": pos,
         "price": e["now_cost"] / 10, "own": float(e["selected_by_percent"]),
@@ -224,7 +224,8 @@ def best_xi(ids, gi):
     need = 11 - len(xi)
     xi += rest[:need]
     bench = rest[need:]
-    cap = max(xi)
+    # captain: small upside bonus for attackers (higher ceiling at equal xPts)
+    cap = max(xi, key=lambda x: x[0] * (1.06 if P[x[1]]["pos"] in ("MID", "FWD") else 1.0))
     total = sum(x for x, _ in xi) + cap[0]
     return total, [i for _, i in xi], cap[1], sum(x for x, _ in bench)
 
@@ -397,7 +398,125 @@ for t, tm in TEAMS.items():
     ticker.append({"id": t, "short": tm["short_name"], "name": tm["name"], "fx": row,
                    "att": round(ATT[t], 2), "def": round(DEF[t], 2)})
 
+os.makedirs(os.path.join(ROOT, "docs"), exist_ok=True)
+# ------------------------------------------------------------------ rule-based advisor
+CHIP_BG = {"wildcard": "Wildcard", "freehit": "Free Hit", "bboost": "Bench Boost", "3xc": "Triple Captain"}
+THRESH = 2.5  # weighted xPts over horizon needed to justify spending a free transfer
+nm_ = lambda i: P[i]["name"]
+advice = []  # {lvl: good|warn|bad|info, cat, text}
+
+
+def add(lvl, cat, text):
+    advice.append({"lvl": lvl, "cat": cat, "text": text})
+
+
+xi0 = set(plan[0]["xi"])
+g0 = gws[0]
+# red flags on my squad
+for i in squad:
+    p = P[i]
+    nfx = len(team_fx[p["team"]][g0])
+    if nfx == 0:
+        add("bad", "Отбор", f"{p['name']} няма мач в GW{g0}.")
+    if (p["status"] != "a" or (p["cop"] is not None and p["cop"] < 100)) and p["status"] != "u":
+        lvl = "bad" if (p["avail"] <= 0.5 and i in xi0) else "warn"
+        add(lvl, "Отбор", f"{p['name']}: {p['news'] or 'под въпрос'}" + (" — в стартовия състав е." if i in xi0 else ""))
+    if p["pc_pct"] <= -70:
+        add("warn", "Цени", f"{p['name']} е близо до поевтиняване ({round(p['pc_pct'])}%). Ако ще го продаваш, по-добре преди нощната промяна.")
+
+# transfer verdict
+b1 = transfers["one"][0] if transfers["one"] else None
+b2 = transfers["two"][0] if transfers["two"] else None
+urgent = [i for i in xi0 if P[i]["avail"] <= 0.5]
+verdict = {"action": "roll", "moves": None}
+if b2 and ft >= 2 and b2["gain"] >= max(THRESH * 1.6, (b1["gain"] if b1 else 0) + 1.5):
+    verdict = {"action": "two", "moves": b2}
+elif b1 and (b1["gain"] >= THRESH or (urgent and b1["gain"] >= 1.0) or (ft >= 5 and b1["gain"] > 0)):
+    verdict = {"action": "one", "moves": b1}
+if verdict["action"] == "one" and b2 and ft < 2 and b2["net"] >= b1["gain"] + 2.0:
+    verdict = {"action": "hit", "moves": b2}
+
+mv_txt = lambda m: ", ".join(f"{nm_(o)} → {nm_(n)}" for o, n in zip(m["out"], m["in"]))
+if verdict["action"] == "roll":
+    best = f" Най-добрият вариант ({mv_txt(b1)}) носи само +{b1['gain']:.1f} за {len(gws)} кръга." if b1 else ""
+    add("info", "Трансфер", f"Запази трансфера (ще имаш {min(ft + 1, 5)} следващия кръг).{best} Под прага от {THRESH} точки е.")
+elif verdict["action"] == "one":
+    why = " (принудително заради контузия)" if urgent and b1["gain"] < THRESH else ""
+    add("good", "Трансфер", f"Направи 1 трансфер{why}: {mv_txt(b1)} — около +{b1['gain']:.1f} очаквани точки за {len(gws)} кръга, банка след това £{b1['bank']:.1f}.")
+elif verdict["action"] == "two":
+    add("good", "Трансфер", f"Използвай 2-та свободни трансфера: {mv_txt(b2)} — около +{b2['gain']:.1f} за {len(gws)} кръга.")
+else:
+    add("good", "Трансфер", f"Хитът си струва: {mv_txt(b2)} — +{b2['gain']:.1f} брутно, +{b2['net']:.1f} нето след −4.")
+if verdict["action"] in ("one", "roll") and b2 and ft < 2 and verdict["action"] != "hit":
+    if b2["net"] > 0:
+        add("info", "Трансфер", f"Двоен ход с −4 ({mv_txt(b2)}) дава +{b2['net']:.1f} нето — малко над нулата, рискът от несигурност в модела не го оправдава.")
+    else:
+        add("info", "Трансфер", "Хит (−4) не се оправдава тази седмица.")
+if verdict["moves"]:
+    for n in verdict["moves"]["in"]:
+        if P[n]["pc_pct"] >= 70:
+            add("warn", "Цени", f"{nm_(n)} е близо до поскъпване ({round(P[n]['pc_pct'])}%) — ако ще го взимаш, направи го преди нощната промяна.")
+
+# captain
+cap0 = plan[0]["cap"]
+my_rank = sorted(plan[0]["xi"], key=lambda i: -P[i]["xpts"][0])[:3]
+cap_line = ", ".join(f"{nm_(i)} {P[i]['xpts'][0]:.1f}" for i in my_rank)
+add("good", "Капитан", f"Капитан за GW{g0}: {nm_(cap0)}. Топ 3 по модела: {cap_line}.")
+for L in leagues:
+    if L["cap"]:
+        tc, pct = max(L["cap"].items(), key=lambda kv: kv[1])
+        tc = int(tc)
+        if tc != cap0 and pct >= 50 and tc in squad:
+            diff = P[cap0]["xpts"][0] - P[tc]["xpts"][0]
+            if diff < 0.6:
+                add("warn", "Капитан", f"В „{L['name']}“ {pct}% капитанстваха {nm_(tc)}. Разликата с {nm_(cap0)} е само {diff:.1f} точки — {nm_(tc)} е по-безопасният избор (щит), {nm_(cap0)} е залог за изпреварване.")
+
+# blanks / doubles / chips
+for g in gws:
+    dbl = [TEAMS[t]["short_name"] for t in TEAMS if len(team_fx[t][g]) >= 2]
+    blk = [TEAMS[t]["short_name"] for t in TEAMS if len(team_fx[t][g]) == 0]
+    if dbl or blk:
+        mine_blk = [nm_(i) for i in squad if len(team_fx[P[i]["team"]][g]) == 0]
+        mine_dbl = [nm_(i) for i in squad if len(team_fx[P[i]["team"]][g]) >= 2]
+        parts = []
+        if dbl: parts.append(f"двоен кръг за {', '.join(dbl)}" + (f" (твои: {', '.join(mine_dbl)})" if mine_dbl else ""))
+        if blk: parts.append(f"без мач: {', '.join(blk)}" + (f" (твои: {', '.join(mine_blk)})" if mine_blk else ""))
+        add("info", "Чипове", f"GW{g}: " + "; ".join(parts) + ".")
+left = chips_left(hist)
+if left:
+    until = left[0]["until"]
+    names = ", ".join(CHIP_BG[c["name"]] for c in left)
+    remaining = until - next_ev + 1
+    add("warn" if remaining <= 4 else "info", "Чипове",
+        f"Неизползвани чипове до GW{until}: {names} (остават {remaining} кръга). Изгарят, ако не ги ползваш до тогава.")
+
+# news feed (FPL official) for my squad + transfer targets + top owned
+watch = list(dict.fromkeys(squad + [i for m in transfers["one"][:5] for i in m["in"]]))
+news = []
+for e in sorted(els.values(), key=lambda e: e["news_added"] or "", reverse=True):
+    if e["news"] and (e["id"] in watch or float(e["selected_by_percent"]) >= 10):
+        news.append({"id": e["id"], "text": e["news"], "added": e["news_added"],
+                     "mine": e["id"] in squad, "link": e.get("scout_news_link") or None})
+news = news[:40]
+
+# compact digest for the AI step (keep small!)
+digest = {
+    "deadline": nxt["deadline_time"] if nxt else None, "next_gw": next_ev, "ft": ft, "bank": bank,
+    "verdict": verdict["action"], "advice": [a["text"] for a in advice],
+    "squad": [{"name": P[i]["name"], "team": TEAMS[P[i]["team"]]["short_name"], "pos": P[i]["pos"], "price": P[i]["price"],
+               "xp_next": P[i]["xpts"][0], "xp6": P[i]["xh"], "start": i in xi0, "news": P[i]["news"]} for i in squad],
+    "targets": [{"name": nm_(i), "team": TEAMS[P[i]["team"]]["short_name"], "price": P[i]["price"], "xp6": P[i]["xh"]}
+                for i in dict.fromkeys(i for m in transfers["one"][:6] for i in m["in"])],
+    "top_transfers": [mv_txt(m) + f" (+{m['gain']})" for m in transfers["one"][:5]],
+    "leagues": [{"name": L["name"], "my_rank": next((m["rank"] for m in L["members"] if m["entry"] == ME), None),
+                 "gap_to_1st": (L["members"][0]["total"] - next((m["total"] for m in L["members"] if m["entry"] == ME), 0)) if L["members"] else None}
+                for L in leagues],
+}
+with open(os.path.join(ROOT, "docs", "digest.json"), "w", encoding="utf-8") as f:
+    json.dump(digest, f, ensure_ascii=False, separators=(",", ":"))
+
 out = {
+    "advice": advice, "verdict": verdict, "news": news,
     "generated": datetime.now(timezone.utc).isoformat(timespec="minutes"),
     "current_gw": cur_ev, "next_gw": next_ev, "deadline": nxt["deadline_time"] if nxt else None,
     "gws": gws, "weights": WEIGHTS[: len(gws)], "league_avg_xg": round(MU, 2),
@@ -417,7 +536,7 @@ out = {
     "leagues": leagues,
     "ticker": ticker,
 }
-os.makedirs(os.path.join(ROOT, "docs"), exist_ok=True)
+
 with open(os.path.join(ROOT, "docs", "data.json"), "w", encoding="utf-8") as f:
     json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
 print("ok", len(players), "players;", "gws", gws, "ft", ft, "bank", bank)

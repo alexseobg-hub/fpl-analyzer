@@ -48,8 +48,8 @@ td.l,th.l{text-align:left}tr:hover td{background:var(--chip)}
 </header>
 <main id="app"></main>
 <script>
-const TABS=[["team","Моят отбор"],["cap","Капитан"],["players","Играчи"],["compare","Сравнение"],["fx","Програма"],["price","Цени"],["league","Минилиги"]];
-let D,P,T,tab=location.hash.slice(1)||"team";
+const TABS=[["advice","Съвети"],["team","Моят отбор"],["cap","Капитан"],["players","Играчи"],["compare","Сравнение"],["fx","Програма"],["price","Цени"],["league","Минилиги"]];
+let D,P,T,AI=null,tab=location.hash.slice(1)||"advice";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const f1=x=>x==null?"–":(+x).toFixed(1), f2=x=>x==null?"–":(+x).toFixed(2);
 const tm=id=>T[id]?.short||"?";
@@ -66,6 +66,7 @@ async function load(){
       for(const u of urls){try{const r=await fetch(u,{cache:"no-store"});if(r.ok){D=await r.json();break}}catch(e){}}}
     if(!D)throw new Error("няма данни");
   }catch(e){document.getElementById("meta").textContent="Грешка при зареждане на данните.";return}
+  try{const r=await fetch("ai.json",{cache:"no-store"});if(r.ok)AI=await r.json()}catch(e){}
   P={};D.players.forEach(p=>P[p.id]=p);T=D.teams;
   const dl=D.deadline?new Date(D.deadline):null;
   document.getElementById("meta").textContent=`Обновено: ${new Date(D.generated).toLocaleString("bg-BG")} · Следващ кръг GW${D.next_gw}`+(dl?` · Дедлайн: ${dl.toLocaleString("bg-BG",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}`:"");
@@ -75,10 +76,30 @@ async function load(){
 }
 function render(){
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.k===tab));
-  ({team:vTeam,cap:vCap,players:vPlayers,compare:vCompare,fx:vFx,price:vPrice,league:vLeague}[tab]||vTeam)();
+  ({advice:vAdvice,team:vTeam,cap:vCap,players:vPlayers,compare:vCompare,fx:vFx,price:vPrice,league:vLeague}[tab]||vTeam)();
 }
 const gwHead=()=>D.gws.map(g=>`<th>GW${g}</th>`).join("");
 function xcells(p){return p.xpts.map(x=>`<td style="color:${x>=5?'var(--acc2)':x<2?'var(--mute)':'inherit'}">${f1(x)}</td>`).join("")}
+
+
+/* ---------------- Advice */
+function vAdvice(){
+  const ic={good:"✔",warn:"!",bad:"✖",info:"i"};
+  const cats=[...new Set(D.advice.map(a=>a.cat))];
+  const fresh=AI&&AI.generated?new Date(AI.generated):null;
+  const aiBlock=AI?`<div class="card"><h2>AI изводи за GW${esc(AI.gw||D.next_gw)}</h2>
+    <p style="margin:0 0 10px;font-size:15px">${esc(AI.summary)}</p>
+    ${(AI.actions||[]).length?`<h3>Какво да направиш</h3><ol style="margin:0;padding-left:20px">${AI.actions.map(a=>`<li>${esc(a)}</li>`).join("")}</ol>`:""}
+    ${(AI.players||[]).length?`<h3>Новини по играчи</h3><table><tbody>${AI.players.map(x=>`<tr><td class="l"><b>${esc(x.name)}</b></td><td class="l" style="white-space:normal">${esc(x.note)}</td><td class="l">${x.url&&/^https:\/\//.test(x.url)?`<a href="${esc(x.url)}" target="_blank" rel="noopener">източник</a>`:""}</td></tr>`).join("")}</tbody></table>`:""}
+    <div class="note">Генерирано: ${fresh?fresh.toLocaleString("bg-BG"):"–"} · от Claude по новини, събрани с Firecrawl, и данните по-долу. Проверявай новините преди дедлайна.</div></div>`
+    :`<div class="card"><h2>AI изводи</h2><div class="note" style="margin:0">Още няма. Ще се появят след първото дневно пускане на AI задачата.</div></div>`;
+  const col={good:"var(--acc2)",warn:"var(--warn)",bad:"var(--bad)",info:"var(--mute)"};
+  app.innerHTML=aiBlock+`<div class="card"><h2>Съвети по правила (от модела)</h2>
+   ${cats.map(c=>`<h3>${esc(c)}</h3>${D.advice.filter(a=>a.cat===c).map(a=>`<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)"><b style="color:${col[a.lvl]};width:14px;text-align:center">${ic[a.lvl]}</b><span>${esc(a.text)}</span></div>`).join("")}`).join("")}
+   <div class="note">Трансфер се препоръчва, ако носи поне 2.5 очаквани точки за ${D.gws.length} кръга (претеглено), а хит само ако нетната печалба е ясно по-голяма от тази на единичния трансфер.</div></div>
+   <div class="card"><h2>Новини от FPL</h2><table><tbody>${D.news.map(n=>`<tr><td class="l">${n.mine?"⭐ ":""}<b>${esc(nm(n.id))}</b> <span class="pill">${tm(P[n.id]?.team)}</span></td><td class="l" style="white-space:normal">${esc(n.text)}</td><td>${n.added?new Date(n.added).toLocaleDateString("bg-BG"):""}</td></tr>`).join("")||'<tr><td class="l">Няма новини.</td></tr>'}</tbody></table>
+   <div class="note">⭐ = твой играч. Показват се новини за твоите играчи, за целите на трансферите и за играчи с над 10% притежание.</div></div>`;
+}
 
 /* ---------------- My team */
 function vTeam(){
@@ -86,7 +107,7 @@ function vTeam(){
   const order={GKP:0,DEF:1,MID:2,FWD:3};
   const sq=[...M.squad].sort((a,b)=>(xi.has(b)-xi.has(a))||order[P[a].pos]-order[P[b].pos]||P[b].xpts[0]-P[a].xpts[0]);
   const chips=M.chips_left.map(c=>({wildcard:"Wildcard",freehit:"Free Hit",bboost:"Bench Boost","3xc":"Triple Captain"}[c.name])).join(", ")||"няма";
-  const row=i=>{const p=P[i];return `<tr class="${p.avail<.75?'inj':''}"><td class="l">${esc(p.name)}${i===pl.cap?'<span class="cap">C</span>':''}${i===pl.vice?'<span class="vc">V</span>':''}${flag(p)}</td><td class="l">${pos(p.pos)}</td><td class="l">${tm(p.team)}</td><td>£${f1(p.price)}</td>${xcells(p)}<td><b>${f1(sum(p.xpts))}</b></td></tr>`};
+  const row=i=>{const p=P[i];return `<tr class="${p.avail<.75?'inj':''}"><td class="l">${esc(p.name)}${i===pl.cap?'<span class="cap">C</span>':''}${i===pl.vice?'<span class="vc">V</span>':''}${flag(p)}</td><td class="l">${pos(p.pos)}</td><td class="l">${tm(p.team)}</td><td>£${f1(p.price)}</td>${xcells(p)}<td><b>${f1(p.xh)}</b></td></tr>`};
   const mv=(m)=>`<div class="move"><div>${m.out.map(i=>`<span class="bad">↓ ${esc(nm(i))}</span> <span class="pill">£${f1(P[i].price)}</span>`).join("<br>")}</div><div>${m.in.map(i=>`<span class="good">↑ ${esc(nm(i))}</span> <span class="pill">${tm(P[i].team)} £${f1(P[i].price)}</span>`).join("<br>")}</div><div style="text-align:right"><b class="${m.net>0?'good':'bad'}">${m.net>0?'+':''}${f2(m.net)}</b><div class="note" style="margin:0">${m.hit?`−${m.hit} хит · `:''}банка £${f1(m.bank)}</div></div></div>`;
   app.innerHTML=`
   <div class="kpis">
@@ -98,7 +119,7 @@ function vTeam(){
     <div class="kpi"><span>Чипове до GW19</span><b style="font-size:13px">${esc(chips)}</b></div>
   </div><br>
   <div class="card"><h2>${esc(M.name)} · отбор за GW${D.next_gw}</h2>
-  <div class="scroll"><table><thead><tr><th class="l">Играч</th><th class="l">Поз</th><th class="l">Отбор</th><th>Цена</th>${gwHead()}<th>Общо</th></tr></thead>
+  <div class="scroll"><table><thead><tr><th class="l">Играч</th><th class="l">Поз</th><th class="l">Отбор</th><th>Цена</th>${gwHead()}<th title="претеглена сума">xP ${D.gws.length}GW</th></tr></thead>
   <tbody>${sq.filter(i=>xi.has(i)).map(row).join("")}<tr><td class="l" colspan="${5+D.gws.length}" style="color:var(--mute);font-size:11px;padding-top:12px">РЕЗЕРВИ</td></tr>${sq.filter(i=>!xi.has(i)).map(row).join("")}</tbody></table></div>
   <div class="note">Капитан по кръгове: ${M.plan.map(x=>`GW${x.gw} <b>${esc(nm(x.cap))}</b>`).join(" · ")}</div></div>
   <div class="grid2">
