@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>FPL Анализатор</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#37003c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="FPL">
 <style>
 :root{--bg:#f6f7f9;--card:#fff;--ink:#14171c;--mute:#667085;--line:#e4e7ec;--acc:#37003c;--acc2:#00a676;--bad:#d92d20;--warn:#f79009;--chip:#f2f4f7}
 @media (prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#171a21;--ink:#e8eaed;--mute:#98a2b3;--line:#2a2f3a;--acc:#c77dff;--acc2:#32d583;--bad:#f97066;--warn:#fdb022;--chip:#222733}}
@@ -38,6 +45,17 @@ td.l,th.l{text-align:left}tr:hover td{background:var(--chip)}
 .bar{height:6px;border-radius:3px;background:var(--chip);overflow:hidden;width:90px;display:inline-block;vertical-align:middle}
 .bar i{display:block;height:100%}
 .inj{opacity:.55}
+.card{overflow-x:auto}
+@media(max-width:700px){
+ header{padding:12px 12px 0}main{padding:12px 12px 32px}
+ nav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}nav::-webkit-scrollbar{display:none}
+ nav button{flex:none;padding:10px 10px}
+ .card{padding:12px 10px}.kpi b{font-size:17px}
+ th,td{padding:6px 5px}
+ .scroll td:first-child,.scroll th:first-child{position:sticky;left:0;background:var(--card);z-index:1}
+ .move{flex-wrap:wrap}
+ .hm{display:none}
+}
 </style>
 </head>
 <body>
@@ -216,8 +234,8 @@ function vLeague(){
   const threats=Object.entries(L.own).map(([id,o])=>({p:P[id],o:+o})).filter(x=>x.p&&!mySet.has(x.p.id)&&x.o>=30).sort((a,b)=>b.o-a.o||b.p.xh-a.p.xh).slice(0,12);
   const diffs=D.me.squad.map(i=>({p:P[i],o:L.own[i]||0})).filter(x=>x.o<=35).sort((a,b)=>a.o-b.o);
   app.innerHTML=`<div class="ctrl">${D.leagues.map((l,i)=>`<button class="pill" style="cursor:pointer;padding:6px 12px;${i===LI?'background:var(--acc);color:#fff':''}" data-l="${i}">${esc(l.name)}</button>`).join("")}</div>
-  <div class="card"><h2>${esc(L.name)} · класиране</h2><div class="scroll"><table><thead><tr><th>#</th><th class="l">Отбор</th><th class="l">Мениджър</th><th>Общо</th><th>Разлика</th><th>GW${D.current_gw}</th><th class="l">Капитан</th><th>Чип</th><th>xPts GW${D.next_gw}</th><th>Хитове</th><th>Стойност</th><th class="l">Чипове до GW19</th></tr></thead><tbody>
-  ${L.members.map(m=>{const d=m.total-me.total;return `<tr style="${m.entry===D.me.id?'font-weight:700':''}"><td>${m.rank}${m.last_rank&&m.last_rank!==m.rank?(m.rank<m.last_rank?' <span class="good">▲</span>':' <span class="bad">▼</span>'):''}</td><td class="l">${esc(m.team)}</td><td class="l">${esc(m.player)}</td><td>${m.total}</td><td class="${d>0?'bad':d<0?'good':''}">${d>0?'+':''}${d}</td><td>${m.gw}</td><td class="l">${esc(nm(m.cap))}</td><td>${m.chip?chipN[m.chip]||m.chip:""}</td><td>${f1(m.next_xpts)}</td><td>${m.hits?"-"+m.hits:0}</td><td>£${f1(m.value)}</td><td class="l">${m.chips_left.map(c=>chipN[c]).join(" ")}</td></tr>`}).join("")}
+  <div class="card"><h2>${esc(L.name)} · класиране</h2><div class="scroll"><table><thead><tr><th>#</th><th class="l">Отбор</th><th class="l hm">Мениджър</th><th>Общо</th><th>Разлика</th><th>GW${D.current_gw}</th><th class="l">Капитан</th><th>Чип</th><th>xPts GW${D.next_gw}</th><th>Хитове</th><th>Стойност</th><th class="l">Чипове до GW19</th></tr></thead><tbody>
+  ${L.members.map(m=>{const d=m.total-me.total;return `<tr style="${m.entry===D.me.id?'font-weight:700':''}"><td>${m.rank}${m.last_rank&&m.last_rank!==m.rank?(m.rank<m.last_rank?' <span class="good">▲</span>':' <span class="bad">▼</span>'):''}</td><td class="l">${esc(m.team)}</td><td class="l hm">${esc(m.player)}</td><td>${m.total}</td><td class="${d>0?'bad':d<0?'good':''}">${d>0?'+':''}${d}</td><td>${m.gw}</td><td class="l">${esc(nm(m.cap))}</td><td>${m.chip?chipN[m.chip]||m.chip:""}</td><td>${f1(m.next_xpts)}</td><td>${m.hits?"-"+m.hits:0}</td><td>£${f1(m.value)}</td><td class="l">${m.chips_left.map(c=>chipN[c]).join(" ")}</td></tr>`}).join("")}
   </tbody></table></div><div class="note">xPts GW${D.next_gw} е очакваният резултат на всеки отбор с последния му състав, най-добрия стартов състав и капитан по нашия модел.</div></div>
   <div class="grid2">
    <div class="card"><h2>Играчи, които много от лигата имат, а ти не</h2><table><thead><tr><th class="l">Играч</th><th class="l">Отбор</th><th>Прит. в лигата</th><th>xP GW${D.next_gw}</th><th>xP ${D.gws.length}GW</th></tr></thead><tbody>${threats.map(x=>`<tr><td class="l">${esc(x.p.name)}</td><td class="l">${tm(x.p.team)}</td><td>${x.o}%</td><td>${f1(x.p.xpts[0])}</td><td>${f1(x.p.xh)}</td></tr>`).join("")}</tbody></table></div>
