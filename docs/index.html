@@ -90,7 +90,7 @@ async function load(){
   document.getElementById("meta").textContent=`Обновено: ${new Date(D.generated).toLocaleString("bg-BG")} · Следващ кръг GW${D.next_gw}`+(dl?` · Дедлайн: ${dl.toLocaleString("bg-BG",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}`:"");
   document.getElementById("tabs").innerHTML=TABS.map(([k,v])=>`<button data-k="${k}">${v}</button>`).join("");
   document.getElementById("tabs").onclick=e=>{if(e.target.dataset.k){tab=e.target.dataset.k;location.hash=tab;render()}};
-  render();
+  render();initSync();
 }
 function render(){
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.k===tab));
@@ -197,8 +197,32 @@ function vAsk(){
 function teamToggle(){return `<div class="ctrl">${[["team","Отбор и трансфери"],["plan","Планер по кръгове"]].map(([k,v])=>`<button class="pill" data-tv="${k}" style="cursor:pointer;padding:8px 14px;border:0;${TV===k?'background:var(--acc);color:#fff':''}">${v}</button>`).join("")}</div>`}
 function bindToggle(){app.querySelectorAll("[data-tv]").forEach(b=>b.onclick=()=>{TV=b.dataset.tv;vTeam()})}
 let PLAN=null;
-function loadPlan(){if(PLAN)return;try{const x=JSON.parse(localStorage.getItem("fpl-plan")||"null");if(x&&x.base===D.next_gw)PLAN=x}catch(e){}if(!PLAN)PLAN={base:D.next_gw,moves:{}};}
-function savePlan(){try{localStorage.setItem("fpl-plan",JSON.stringify(PLAN))}catch(e){}}
+/* plan storage: localStorage everywhere + private per-user cloud copy when opened inside Claude */
+const SYNC={ref:null,state:"local",busy:false,again:false,lastJson:""};
+function normPlan(x){if(!x||typeof x!=="object"||typeof x.moves!=="object")return null;const moves={};
+  Object.entries(x.moves).forEach(([g,arr])=>{if(+g>=D.next_gw&&Array.isArray(arr))moves[g]=arr.filter(m=>m&&typeof m==="object").map(m=>({out:+m.out||null,in:+m.in||null}))});
+  return{base:D.next_gw,moves,ts:+x.ts||0}}
+function loadPlan(){if(PLAN)return;try{PLAN=normPlan(JSON.parse(localStorage.getItem("fpl-plan")||"null"))}catch(e){}if(!PLAN)PLAN={base:D.next_gw,moves:{},ts:0};}
+async function pushRemote(){if(!SYNC.ref)return;if(SYNC.busy){SYNC.again=true;return}SYNC.busy=true;
+  try{const body={plan:JSON.stringify(PLAN)};SYNC.lastJson=body.plan;await SYNC.ref.set(body);SYNC.state="synced"}catch(e){SYNC.state="error"}
+  SYNC.busy=false;syncBadge();if(SYNC.again){SYNC.again=false;pushRemote()}}
+let pushT=null;
+function savePlan(){PLAN.ts=Date.now();try{localStorage.setItem("fpl-plan",JSON.stringify(PLAN))}catch(e){}
+  if(SYNC.ref){SYNC.state="saving";clearTimeout(pushT);pushT=setTimeout(pushRemote,600)}}
+function syncBadge(){const el=document.getElementById("sync");if(!el)return;
+  el.textContent={local:"Пази се само на това устройство",loading:"Синхронизиране…",saving:"Записване…",synced:"☁ Синхронизирано между устройствата",error:"⚠ Не можах да синхронизирам — пази се локално"}[SYNC.state]||""}
+async function initSync(){try{if(!window.claude||!claude.use)return;const [db,user]=await Promise.all([claude.use("db"),claude.use("user")]);if(!db||!user)return;
+  const uid=await user.id();if(!uid)return;SYNC.ref=db.doc("data/users/"+uid+"/plan");SYNC.state="loading";syncBadge();
+  const t=setTimeout(()=>{if(SYNC.state==="loading"){SYNC.state="error";syncBadge()}},10000);
+  SYNC.ref.onSnapshot(snap=>{clearTimeout(t);
+    if(snap.exists){const raw=snap.data().plan;if(typeof raw==="string"&&raw!==SYNC.lastJson&&!snap.metadata.hasPendingWrites){
+      let r=null;try{r=normPlan(JSON.parse(raw))}catch(e){}loadPlan();
+      if(r&&r.ts>=(PLAN.ts||0)){PLAN=r;try{localStorage.setItem("fpl-plan",JSON.stringify(PLAN))}catch(e){};SYNC.lastJson=raw;if(tab==="team"&&TV==="plan")vPlan()}
+      else if(r&&r.ts<(PLAN.ts||0))pushRemote();}}
+    else{loadPlan();if(PLAN.ts)pushRemote()}
+    if(!snap.metadata.fromCache&&SYNC.state==="loading")SYNC.state="synced";syncBadge()},
+   ()=>{clearTimeout(t);SYNC.state="error";syncBadge()});
+ }catch(e){}}
 function bestXI(ids,gi){const by={GKP:[],DEF:[],MID:[],FWD:[]};ids.forEach(i=>{const p=P[i];if(p)by[p.pos].push([p.xpts[gi],i])});
  Object.values(by).forEach(v=>v.sort((a,b)=>b[0]-a[0]));if(!by.GKP.length)return{tot:0,xi:[],cap:null,bench:[]};
  let xi=[by.GKP[0],...by.DEF.slice(0,3),...by.MID.slice(0,2),...by.FWD.slice(0,1)];
@@ -252,7 +276,7 @@ function vPlan(){
      <button data-add="${r.g}" class="pill" style="cursor:pointer;border:0;margin-top:4px">+ трансфер</button></div>`).join("")}
    <div class="ctrl" style="margin-top:10px"><button id="pclr" class="pill" style="cursor:pointer;border:0">Изчисти плана</button>
     <button id="psug" class="pill" style="cursor:pointer;border:0">Вземи най-добрия трансфер за GW${D.next_gw}</button></div>
-   <div class="note">Планът се пази само в този браузър. Цената за продажба е приблизително текущата. Свободните трансфери се натрупват до 5.</div></div>
+   <div class="note"><b id="sync"></b> · Цената за продажба е приблизително текущата. Свободните трансфери се натрупват до 5.</div></div>
   <div class="card"><h2>Програма и xP на отбора по кръгове</h2><div class="scroll"><table><thead><tr><th class="l">Играч</th>${rows.map(r=>`<th>GW${r.g}</th>`).join("")}</tr></thead><tbody>
    ${all.map(i=>`<tr><td class="l">${esc(P[i].name)} <span class="pill">${P[i].pos}</span></td>${rows.map(r=>cell(i,r)).join("")}</tr>`).join("")}
    <tr><td class="l"><b>Отбор (XI + C)</b></td>${rows.map(r=>`<td><b>${f1(r.tot)}</b>${r.hit?`<br><span class="bad">−${r.hit}</span>`:""}</td>`).join("")}</tr>
@@ -262,13 +286,13 @@ function vPlan(){
    <div class="ctrl"><button id="pai" class="pill" style="display:none;cursor:pointer;background:var(--acc2);color:#062;padding:10px 16px;border:0">Оцени плана</button>
    <a id="pgo" class="pill" target="_blank" rel="noopener" style="background:var(--acc);color:#fff;padding:10px 16px;text-decoration:none">Оцени в Claude →</a><span id="pmsg" class="note" style="margin:0"></span></div>
    <div id="pout" style="white-space:pre-wrap;font-size:15px;line-height:1.55"></div></div>`;
-  bindToggle();
+  bindToggle();syncBadge();
   const redraw=()=>{savePlan();vPlan()};
   app.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{const g=+b.dataset.add;(PLAN.moves[g]=PLAN.moves[g]||[]).push({out:null,in:null});redraw()});
   app.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{PLAN.moves[+b.dataset.g].splice(+b.dataset.k,1);redraw()});
   app.querySelectorAll("select[data-f]").forEach(el=>el.onchange=()=>{PLAN.moves[+el.dataset.g][+el.dataset.k].out=+el.value||null;redraw()});
   app.querySelectorAll("input[data-f]").forEach(el=>el.onchange=()=>{const p=pfind(el.value);PLAN.moves[+el.dataset.g][+el.dataset.k].in=p?p.id:null;redraw()});
-  pclr.onclick=()=>{PLAN={base:D.next_gw,moves:{}};redraw()};
+  pclr.onclick=()=>{PLAN={base:D.next_gw,moves:{},ts:0};redraw()};
   psug.onclick=()=>{const m=D.me.transfers.one[0];if(m){(PLAN.moves[D.next_gw]=PLAN.moves[D.next_gw]||[]).push({out:m.out[0],in:m.in[0]});redraw()}};
   const prompt=()=>{const lines=rows.map(r=>`GW${r.g}: ${(PLAN.moves[r.g]||[]).filter(m=>m.out&&m.in).map(m=>`${P[m.out].name}→${P[m.in].name}`).join(", ")||"без трансфер"}; хит ${r.hit}; банка £${f1(r.bank)}; xP отбор ${f1(r.tot)} (без трансфери ${f1(r.base)}); капитан ${P[r.cap]?.name}`).join("\n");
     const ins=[...new Set(Object.values(PLAN.moves).flat().filter(m=>m.in).map(m=>m.in))].map(i=>pctx(P[i])).join("\n");
