@@ -130,7 +130,7 @@ function buildPrompt(){
   const sq=M.squad.map(i=>P[i]).map(p=>`${p.name} ${tm(p.team)} ${p.pos} £${f1(p.price)} xP:${f1(p.xpts[0])}/${f1(p.xh)}${M.plan[0].xi.includes(p.id)?"":" (резерва)"}${p.news?" ⚠"+p.news:""}`).join("; ");
   const tr=M.transfers.one.slice(0,5).map(m=>`${nm(m.out[0])}→${nm(m.in[0])} +${f1(m.gain)}`).join("; ");
   const adv=D.advice.map(a=>"- "+a.text).join("\n");
-  const ai=AI?`\nДневни AI изводи (${AI.generated}): ${AI.summary}`:"";
+  const ai=AI?`\nДневни AI изводи: ${AI.summary.slice(0,500)}`:"";
   return `Ти си опитен FPL играч. Отговори кратко и конкретно на български, с ясна препоръка и защо. Ползвай данните по-долу (моят модел за очаквани точки), но кажи, ако нещо важно не се вижда от тях. Ако имаш уеб търсене, провери последните новини за споменатите играчи преди дедлайна.
 
 ВЪПРОС: ${ASK.q||"(виж играчите по-долу)"}
@@ -159,9 +159,12 @@ function vAsk(){
      <button id="cp" class="pill" style="cursor:pointer;padding:10px 16px;font-size:14px;border:0">Копирай въпроса с данните</button>
      <span id="cpm" class="note" style="margin:0;align-self:center"></span></div>
    </div>
-   <div class="note">Бутонът отваря нов разговор в Claude с попълнен въпрос и данните от таблото. Прегледай го и го изпрати. Ползва твоя Claude акаунт и малко от лимита. Ако не се попълни автоматично, ползвай „Копирай“ и го постави в Claude.</div></div>
+   <div class="note">Бутонът копира въпроса заедно с данните и отваря нов разговор в Claude. Ако полето е попълнено, само го изпрати. Ако е празно, постави (Paste) копирания текст. Ползва твоя Claude акаунт и малко от лимита.</div></div>
    <div class="card"><h3 style="margin-top:0">Какво ще получи Claude</h3><pre id="pv" style="white-space:pre-wrap;font-size:12px;color:var(--mute);margin:0;max-height:40vh;overflow:auto"></pre></div>`;
-  const upd=()=>{const t=buildPrompt();pv.textContent=t;go.href="https://claude.ai/new?q="+encodeURIComponent(t.slice(0,12000))};
+  const inFrame=(()=>{try{return window.top!==window}catch(e){return true}})();
+  if(inFrame)go.removeAttribute("target");
+  const upd=()=>{const t=buildPrompt();pv.textContent=t;go.href="https://claude.ai/new?q="+encodeURIComponent(t.slice(0,6000))};
+  go.onclick=()=>{const t=buildPrompt();try{navigator.clipboard.writeText(t).then(()=>{cpm.textContent="Въпросът е копиран ✓ Ако полето в Claude е празно, просто го постави (Paste)."}).catch(()=>{})}catch(e){}};
   aq.oninput=e=>{ASK.q=e.target.value;upd()};
   app.querySelectorAll("input[data-k]").forEach(el=>el.oninput=e=>{ASK.picks[+el.dataset.k]=e.target.value;upd()});
   app.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{let t=presets[+b.dataset.p];const ps=ASK.picks.map(pfind);if(ps[0])t=t.replace("ИГРАЧ1",ps[0].name);if(ps[1])t=t.replace("ИГРАЧ2",ps[1].name);ASK.q=t;aq.value=t;upd()});
