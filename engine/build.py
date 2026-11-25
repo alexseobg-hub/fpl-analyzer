@@ -255,9 +255,8 @@ def free_transfers(hist):
             ft = 1
             continue
         if chips.get(ev) in ("wildcard", "freehit"):
-            pass
-        else:
-            ft = max(ft - row["event_transfers"], 0)
+            continue  # banked FTs are kept, but no extra FT is gained for that GW
+        ft = max(ft - row["event_transfers"], 0)
         ft = min(ft + 1, 5)
     return ft
 

@@ -301,7 +301,7 @@ function simulate(){
     const tc={};squad.forEach(i=>{tc[P[i].team]=(tc[P[i].team]||0)+1});Object.entries(tc).forEach(([t,c])=>{if(c>3)errs.push(`GW${g}: ${c} играчи от ${tm(+t)} (макс. 3).`)});
     if(bank<-0.001)errs.push(`GW${g}: бюджетът е на минус (£${f1(bank)}).`);
     const n=mv.length,free=chip==="wildcard"||chip==="freehit",hit=free?0:Math.max(0,n-ft)*4,ftBefore=ft;
-    ft=free?Math.min(5,ft+1):Math.min(5,Math.max(ft-n,0)+1);
+    ft=free?ft:Math.min(5,Math.max(ft-n,0)+1); // WC/FH: banked FTs kept, no +1
     const b=bestXI(squad,gi);let cap=b.cap;const co=PLAN.cap[g];if(co&&b.xi.includes(co))cap=co;
     const capPts=cap?P[cap].xpts[gi]:0,xiPts=b.xi.reduce((s,i)=>s+P[i].xpts[gi],0),benchPts=b.bench.reduce((s,i)=>s+P[i].xpts[gi],0);
     const tot=xiPts+capPts*(chip==="3xc"?2:1)+(chip==="bboost"?benchPts:0);
