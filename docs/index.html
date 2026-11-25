@@ -46,6 +46,55 @@ td.l,th.l{text-align:left}tr:hover td{background:var(--chip)}
 .bar i{display:block;height:100%}
 .inj{opacity:.55}
 .card{overflow-x:auto}
+.plan-top{display:flex;gap:8px;flex-wrap:wrap;align-items:stretch}
+.gwnav{display:flex;align-items:center;gap:6px;background:var(--acc);color:#fff;border-radius:12px;padding:6px}
+.gwnav>div{text-align:center;min-width:86px}.gwnav b{display:block;font-size:20px}.gwnav small{font-size:11px;opacity:.85}
+.nb2{width:40px;height:40px;border-radius:10px;border:0;background:rgba(255,255,255,.15);color:#fff;font-size:24px;cursor:pointer}.nb2:disabled{opacity:.3}
+.stat{flex:1;min-width:84px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px}.stat small{display:block;color:var(--mute);font-size:11px}.stat b{font-size:19px}
+.strip{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-top:10px}
+.strip button{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:6px 4px;cursor:pointer;color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:1px}
+.strip button.on{outline:2px solid var(--acc);border-color:transparent}.strip small{font-size:11px;color:var(--mute)}.strip b{font-size:14px}.strip em{font-size:10px;font-style:normal;color:var(--mute)}
+.bars{display:flex;gap:3px;align-items:flex-end;height:30px}.bars i{width:9px;background:var(--acc2);border-radius:2px 2px 0 0}.bars i.b0{background:var(--line)}
+.pl-wrap{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:14px;margin-top:12px;align-items:start}
+.pitch{position:relative;border-radius:14px;padding:18px 6px 14px;min-height:470px;display:flex;flex-direction:column;justify-content:space-around;gap:6px;overflow:hidden;
+ background:repeating-linear-gradient(180deg,#2f9e55 0 44px,#2a924e 44px 88px);box-shadow:inset 0 0 0 3px rgba(255,255,255,.55)}
+.pitch:before{content:"";position:absolute;left:50%;top:-1px;width:150px;height:62px;transform:translateX(-50%);border:3px solid rgba(255,255,255,.5);border-top:0}
+.pitch:after{content:"";position:absolute;left:50%;bottom:-70px;width:150px;height:140px;transform:translateX(-50%);border:3px solid rgba(255,255,255,.4);border-radius:50%}
+.line{display:flex;justify-content:space-evenly;gap:4px;position:relative;z-index:1}
+.pc{all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;width:92px;max-width:19vw;text-align:center;border-radius:10px;padding:2px;transition:transform .12s}
+.pc:hover{transform:translateY(-2px)}.pc:focus-visible{outline:3px solid #fff}
+.pc.sel .nm{background:var(--acc2);color:#04260f}.pc.selling{opacity:.5;filter:grayscale(.6)}
+.sh{position:relative;display:block;filter:drop-shadow(0 3px 3px rgba(0,0,0,.35))}
+.cb,.ib,.nb{position:absolute;font:700 10px/16px system-ui;width:16px;height:16px;border-radius:50%;text-align:center}
+.cb{right:-4px;top:-2px;background:#111;color:#fff}.cb.v{background:#fff;color:#111}.ib{left:-4px;top:-2px;background:#f79009;color:#111}.nb{left:-4px;bottom:2px;background:#00e676;color:#04260f}
+.nm{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#18191c;color:#fff;font:600 12px/1.2 system-ui;padding:3px 6px;border-radius:5px 5px 0 0;margin-top:2px;width:100%;box-sizing:border-box}
+.fx2{display:block;width:100%;box-sizing:border-box;font:700 10.5px/1.25 system-ui;color:#111;padding:2px 3px;border-radius:0 0 5px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bench{margin-top:8px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px 6px}.bl1{display:block;font-size:11px;color:var(--mute);margin:0 0 4px 6px;text-transform:uppercase;letter-spacing:.04em}
+.side .sheet{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;position:sticky;top:10px;max-height:calc(100vh - 20px);overflow:auto}
+.sp-h{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.x{border:0;background:var(--chip);color:var(--ink);width:34px;height:34px;border-radius:9px;cursor:pointer;font-size:16px;flex:none}
+.btn{border:0;background:var(--acc);color:#fff;font:600 14px system-ui;padding:10px 14px;border-radius:10px;cursor:pointer;min-height:40px;display:inline-flex;align-items:center}
+.btn.ghost{background:var(--chip);color:var(--ink)}.btn.danger{background:var(--bad);color:#fff}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.mini{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;margin:10px 0}.mini div{text-align:center;font-size:11px}.mini div.cur{outline:2px solid var(--acc);border-radius:6px}
+.mini i{display:block;font-style:normal;font-weight:700;color:#111;border-radius:4px;padding:2px 0;margin:2px 0;font-size:10px}.mini b{font-size:13px}
+.bl{display:flex;flex-direction:column;gap:4px}
+.br{all:unset;cursor:pointer;display:flex;gap:8px;align-items:center;padding:7px 6px;border-radius:10px;border:1px solid var(--line)}.br:hover{background:var(--chip)}.br:disabled{opacity:.4;cursor:not-allowed}
+.bn1{flex:1;min-width:0;display:flex;flex-direction:column}.bn1 small{color:var(--mute);font-size:11px}.bx{text-align:right}.bx b{display:block;font-size:16px}.bx small{color:var(--mute);font-size:11px}
+.f3{display:flex;gap:3px;margin-top:3px}.f3 i{font-style:normal;font:700 10px/1.4 system-ui;color:#111;border-radius:3px;padding:0 4px}
+.mvr{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)}
+@media(max-width:820px){
+ .pl-wrap{grid-template-columns:1fr}
+ .side .sheet{position:static;max-height:none}
+ .side.open{position:fixed;inset:auto 0 0 0;z-index:50;animation:up .2s ease-out}
+ .side.open .sheet{border-radius:16px 16px 0 0;max-height:72vh;box-shadow:0 -10px 30px rgba(0,0,0,.3)}
+ @keyframes up{from{transform:translateY(100%)}to{transform:none}}
+ .pitch{min-height:430px;padding:14px 2px 10px}.pc{width:72px}.nm{font-size:11px}.fx2{font-size:9.5px}
+ .strip{grid-template-columns:repeat(6,minmax(0,1fr));gap:4px}.strip b{font-size:12px}.bars{height:22px}
+ .stat{min-width:70px;padding:6px 8px}.stat b{font-size:16px}
+}
+@media(prefers-reduced-motion:reduce){.side.open{animation:none}.pc{transition:none}}
+
 @media(max-width:700px){
  header{padding:12px 12px 0}main{padding:12px 12px 32px}
  nav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}nav::-webkit-scrollbar{display:none}
@@ -201,8 +250,9 @@ let PLAN=null;
 const SYNC={ref:null,state:"local",busy:false,again:false,lastJson:""};
 function normPlan(x){if(!x||typeof x!=="object"||typeof x.moves!=="object")return null;const moves={};
   Object.entries(x.moves).forEach(([g,arr])=>{if(+g>=D.next_gw&&Array.isArray(arr))moves[g]=arr.filter(m=>m&&typeof m==="object").map(m=>({out:+m.out||null,in:+m.in||null}))});
-  return{base:D.next_gw,moves,ts:+x.ts||0}}
-function loadPlan(){if(PLAN)return;try{PLAN=normPlan(JSON.parse(localStorage.getItem("fpl-plan")||"null"))}catch(e){}if(!PLAN)PLAN={base:D.next_gw,moves:{},ts:0};}
+  const chips={},cap={};Object.entries(x.chips||{}).forEach(([g,c])=>{if(+g>=D.next_gw&&CHIPN[c])chips[g]=c});Object.entries(x.cap||{}).forEach(([g,c])=>{if(+g>=D.next_gw&&+c)cap[g]=+c});
+  return{base:D.next_gw,moves,chips,cap,ts:+x.ts||0}}
+function loadPlan(){if(PLAN)return;try{PLAN=normPlan(JSON.parse(localStorage.getItem("fpl-plan")||"null"))}catch(e){}if(!PLAN)PLAN={base:D.next_gw,moves:{},chips:{},cap:{},ts:0};}
 async function pushRemote(){if(!SYNC.ref)return;if(SYNC.busy){SYNC.again=true;return}SYNC.busy=true;
   try{const body={plan:JSON.stringify(PLAN)};SYNC.lastJson=body.plan;await SYNC.ref.set(body);SYNC.state="synced"}catch(e){SYNC.state="error"}
   SYNC.busy=false;syncBadge();if(SYNC.again){SYNC.again=false;pushRemote()}}
@@ -230,87 +280,128 @@ function bestXI(ids,gi){const by={GKP:[],DEF:[],MID:[],FWD:[]};ids.forEach(i=>{c
  const bench=[by.GKP[1],...rest.slice(need)].filter(Boolean);
  const cap=xi.reduce((m,x)=>{const s=x[0]*(["MID","FWD"].includes(P[x[1]].pos)?1.06:1);return s>m.s?{s,x}:m},{s:-1,x:null}).x;
  return{tot:xi.reduce((s,x)=>s+x[0],0)+(cap?cap[0]:0),xi:xi.map(x=>x[1]),cap:cap?cap[1]:null,bench:bench.map(x=>x[1])}}
+const KIT={ARS:["#EF0107","#ffffff"],AVL:["#670E36","#95BFE5"],BHA:["#0057B8","#ffffff"],BOU:["#DA291C","#111111"],BRE:["#E30613","#ffffff"],CHE:["#034694","#034694"],COV:["#59CBE8","#ffffff"],CRY:["#1B458F","#C4122E"],EVE:["#003399","#ffffff"],FUL:["#ffffff","#111111"],HUL:["#F5A12D","#111111"],IPS:["#3A64A3","#ffffff"],LEE:["#ffffff","#1D428A"],LIV:["#C8102E","#C8102E"],MCI:["#6CABDD","#ffffff"],MUN:["#DA291C","#111111"],NEW:["#241F20","#ffffff"],NFO:["#DD0000","#ffffff"],SUN:["#EB172B","#ffffff"],TOT:["#ffffff","#132257"]};
+const GKKIT=["#1fd17a","#0f6e40"];
+function shirt(team,gk,size=46){const k=gk?GKKIT:(KIT[tm(team)]||["#888","#ccc"]);const [a,b]=k;const stripe=["BOU","NEW","BRE","SUN","CRY"].includes(tm(team))&&!gk;
+ return `<svg width="${size}" height="${size}" viewBox="0 0 64 64" aria-hidden="true"><defs><pattern id="st${team}" width="10" height="64" patternUnits="userSpaceOnUse"><rect width="5" height="64" fill="${a}"/><rect x="5" width="5" height="64" fill="${b}"/></pattern></defs>
+ <path d="M20 6 L8 12 L2 26 L12 30 L14 24 L14 58 L50 58 L50 24 L52 30 L62 26 L56 12 L44 6 C42 11 37 13 32 13 C27 13 22 11 20 6Z" fill="${stripe?`url(#st${team})`:a}" stroke="rgba(0,0,0,.35)" stroke-width="1.5"/>
+ <path d="M2 26 L12 30 L14 24 L8 12Z M62 26 L52 30 L50 24 L56 12Z" fill="${b}" opacity="${stripe?0:.95}"/><path d="M24 7 C26 11 29 12 32 12 C35 12 38 11 40 7" fill="none" stroke="${b}" stroke-width="2.5"/></svg>`}
+const CHIPN={wildcard:"Wildcard",freehit:"Free Hit",bboost:"Bench Boost","3xc":"Triple Captain"};
+let PG=0, SEL=null, SELL=null, BUYQ={q:"",sort:"rest",max:null};
 function simulate(){
-  const M=D.me;let squad=[...M.squad],bank=M.bank,ft=M.ft,base=[...M.squad];const rows=[],errs=[];const owned=new Set(squad);
+  const M=D.me;let squad=[...M.squad],bank=M.bank,ft=M.ft;const base=[...M.squad];const rows=[],errs=[];
+  PLAN.chips=PLAN.chips||{};PLAN.cap=PLAN.cap||{};
+  const used={};
   D.gws.forEach((g,gi)=>{
-    const mv=(PLAN.moves[g]||[]).filter(m=>m.out&&m.in);let hit=0;
+    const chip=PLAN.chips[g]||null;if(chip){if(used[chip])errs.push(`${CHIPN[chip]} е избран повече от веднъж.`);used[chip]=1}
+    const start=[...squad],startBank=bank;const mv=(PLAN.moves[g]||[]).filter(m=>m.out&&m.in);const inSet=new Set();
     mv.forEach(m=>{const o=P[m.out],n=P[m.in];if(!o||!n)return;
-      if(!squad.includes(m.out)){errs.push(`GW${g}: ${o.name} не е в отбора.`);return}
-      if(squad.includes(m.in)){errs.push(`GW${g}: ${n.name} вече е в отбора.`);return}
-      if(o.pos!==n.pos){errs.push(`GW${g}: ${o.name} (${o.pos}) и ${n.name} (${n.pos}) са различни позиции.`);return}
-      squad=squad.map(i=>i===m.out?m.in:i);bank=+(bank+o.price-n.price).toFixed(1)});
-    const tc={};squad.forEach(i=>{tc[P[i].team]=(tc[P[i].team]||0)+1});Object.entries(tc).forEach(([t,c])=>{if(c>3)errs.push(`GW${g}: ${c} играчи от ${tm(+t)} (максимум 3).`)});
+      if(!squad.includes(m.out)||squad.includes(m.in)||o.pos!==n.pos){errs.push(`GW${g}: невалиден трансфер ${o.name} → ${n.name}.`);return}
+      squad=squad.map(i=>i===m.out?m.in:i);bank=+(bank+o.price-n.price).toFixed(1);inSet.add(m.in)});
+    const tc={};squad.forEach(i=>{tc[P[i].team]=(tc[P[i].team]||0)+1});Object.entries(tc).forEach(([t,c])=>{if(c>3)errs.push(`GW${g}: ${c} играчи от ${tm(+t)} (макс. 3).`)});
     if(bank<-0.001)errs.push(`GW${g}: бюджетът е на минус (£${f1(bank)}).`);
-    const n=mv.length;hit=Math.max(0,n-ft)*4;const ftUsed=ft;ft=Math.min(5,Math.max(ft-n,0)+1);
-    const b=bestXI(squad,gi),b0=bestXI(base,gi);
-    rows.push({g,gi,n,hit,ft:ftUsed,bank,squad:[...squad],...b,net:b.tot-hit,base:b0.tot});
+    const n=mv.length,free=chip==="wildcard"||chip==="freehit",hit=free?0:Math.max(0,n-ft)*4,ftBefore=ft;
+    ft=free?Math.min(5,ft+1):Math.min(5,Math.max(ft-n,0)+1);
+    const b=bestXI(squad,gi);let cap=b.cap;const co=PLAN.cap[g];if(co&&b.xi.includes(co))cap=co;
+    const capPts=cap?P[cap].xpts[gi]:0,xiPts=b.xi.reduce((s,i)=>s+P[i].xpts[gi],0),benchPts=b.bench.reduce((s,i)=>s+P[i].xpts[gi],0);
+    const tot=xiPts+capPts*(chip==="3xc"?2:1)+(chip==="bboost"?benchPts:0);
+    const vice=b.xi.filter(i=>i!==cap).sort((x,y)=>P[y].xpts[gi]-P[x].xpts[gi])[0];
+    const b0=bestXI(base,gi);
+    rows.push({g,gi,chip,n,hit,ft:ftBefore,bank,squad:[...squad],xi:b.xi,bench:b.bench,cap,vice,tot,net:tot-hit,base:b0.tot,inSet,value:squad.reduce((s,i)=>s+P[i].price,0)+bank});
+    if(chip==="freehit"){squad=start;bank=startBank}
   });
   return{rows,errs};
 }
+function restXP(p,gi){return p.xpts.slice(gi).reduce((s,x,k)=>s+x*(D.weights[gi+k]||.6),0)}
 function vPlan(){
-  loadPlan();
-  const {rows,errs}=simulate();
-  const order={GKP:0,DEF:1,MID:2,FWD:3};
-  const all=[...new Set(rows.flatMap(r=>r.squad))].sort((a,b)=>order[P[a].pos]-order[P[b].pos]||P[b].xh-P[a].xh);
+  loadPlan();PLAN.chips=PLAN.chips||{};PLAN.cap=PLAN.cap||{};
+  const {rows,errs}=simulate();PG=Math.min(PG,rows.length-1);const R=rows[PG];
   const totNet=sum(rows.map(r=>r.net)),totBase=sum(rows.map(r=>r.base));
-  const opts=D.players.map(p=>`<option value="${esc(p.name)} (${tm(p.team)})">`).join("");
-  const fxOf=(p,gi)=>D.ticker.find(t=>t.id===p.team).fx[gi].map(x=>x.opp+(x.h?"":"(г)")).join("+")||"—";
-  const cell=(i,r)=>{if(!r.squad.includes(i))return `<td style="color:var(--line)">·</td>`;const p=P[i],x=p.xpts[r.gi],inXI=r.xi.includes(i);
-    return `<td style="${inXI?'':'opacity:.45'}"><span class="fx" style="background:${heat(x,1.5,6)};min-width:62px">${fxOf(p,r.gi)}<br>${f1(x)}${r.cap===i?' (C)':''}</span></td>`};
-  const mvRow=(g,m,k)=>{const sq=rows.find(r=>r.g===g);const prev=rows.find(r=>r.g===g-1);const pool=(prev?prev.squad:D.me.squad);
-    return `<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:4px 0">
-     <select data-g="${g}" data-k="${k}" data-f="out" style="font-size:15px;padding:6px;border:1px solid var(--line);border-radius:7px;background:var(--card);color:var(--ink)"><option value="">Продай…</option>${pool.map(i=>`<option value="${i}" ${m.out==i?"selected":""}>${esc(P[i].name)} (${P[i].pos} £${f1(P[i].price)})</option>`).join("")}</select>
-     → <input list="plp" data-g="${g}" data-k="${k}" data-f="in" value="${m.in?esc(P[m.in].name+" ("+tm(P[m.in].team)+")"):""}" placeholder="Купи…" style="font-size:15px;padding:6px;border:1px solid var(--line);border-radius:7px;background:var(--card);color:var(--ink);min-width:150px">
-     <button data-g="${g}" data-k="${k}" data-del="1" class="pill" style="cursor:pointer;border:0">✕</button></div>`};
+  const fx=(p,gi)=>D.ticker.find(t=>t.id===p.team).fx[gi];
+  const fxTxt=(p,gi)=>fx(p,gi).map(x=>x.opp+(x.h?"":" (г)")).join(" + ")||"няма мач";
+  const card=(i,bench)=>{const p=P[i],x=p.xpts[R.gi],inj=p.status!=="a"||(p.cop!=null&&p.cop<100);
+    return `<button class="pc${SEL===i?" sel":""}${SELL===i?" selling":""}${bench?" bn":""}" data-pid="${i}" aria-label="${esc(p.name)}">
+      <span class="sh">${shirt(p.team,p.pos==="GKP")}${R.cap===i?`<b class="cb">${R.chip==="3xc"?"3x":"C"}</b>`:R.vice===i?'<b class="cb v">V</b>':""}${inj?`<b class="ib" title="${esc(p.news)}">!</b>`:""}${R.inSet.has(i)?'<b class="nb">↑</b>':""}</span>
+      <span class="nm">${esc(p.name)}</span><span class="fx2" style="background:${heat(x,1.5,6.5)}">${esc(fxTxt(p,R.gi))} · ${f1(x)}</span></button>`};
+  const lines=["GKP","DEF","MID","FWD"].map(pos=>`<div class="line">${R.xi.filter(i=>P[i].pos===pos).map(i=>card(i)).join("")}</div>`).join("");
+  const chipsAvail=D.me.chips_left.map(c=>c.name);
+  /* side panel */
+  let side="";
+  if(SELL){const o=P[SELL];const budget=+(R.bank+o.price).toFixed(1);const max=BUYQ.max??budget;
+    const cnt={};R.squad.filter(i=>i!==SELL).forEach(i=>{cnt[P[i].team]=(cnt[P[i].team]||0)+1});
+    let list=D.players.filter(p=>p.pos===o.pos&&!R.squad.includes(p.id)&&p.price<=max+1e-9&&(!BUYQ.q||p.name.toLowerCase().includes(BUYQ.q.toLowerCase())));
+    const key={rest:p=>restXP(p,R.gi),gw:p=>p.xpts[R.gi],price:p=>p.price,form:p=>p.form,own:p=>p.own}[BUYQ.sort];
+    list.sort((a,b)=>key(b)-key(a));list=list.slice(0,60);
+    side=`<div class="sp-h"><div><div class="note" style="margin:0">Продаваш · бюджет £${f1(budget)}</div><b style="font-size:17px">${esc(o.name)}</b> <span class="pill">${tm(o.team)} £${f1(o.price)}</span></div><button class="x" data-cancel="1" aria-label="Затвори">✕</button></div>
+     <div class="ctrl" style="margin:8px 0"><input id="bq" placeholder="Търси ${o.pos}" value="${esc(BUYQ.q)}" style="flex:1;font-size:16px">
+      <select id="bs">${[["rest","xP до GW"+D.gws[D.gws.length-1]],["gw","xP GW"+R.g],["form","Форма"],["own","Притежание"],["price","Цена"]].map(([k,v])=>`<option value="${k}" ${BUYQ.sort===k?"selected":""}>${v}</option>`).join("")}</select>
+      <label class="note" style="margin:0">до £<input id="bm" type="number" step=".1" value="${f1(max)}" style="width:64px"></label></div>
+     <div class="bl">${list.map(p=>{const full=(cnt[p.team]||0)>=3;const f3=D.gws.slice(R.gi,R.gi+3).map((g,k)=>fx(p,R.gi+k).map(x=>`<i style="background:${heat(p.xpts[R.gi+k],1.5,6.5)}">${x.opp}${x.h?"":"·г"}</i>`).join("")||"<i>—</i>").join("");
+       return `<button class="br" data-buy="${p.id}" ${full?"disabled":""}>${shirt(p.team,p.pos==="GKP",30)}<span class="bn1"><b>${esc(p.name)}</b>${flag(p)}<small>${tm(p.team)} · £${f1(p.price)} · ${f1(p.own)}%${full?" · вече имаш 3 от отбора":""}</small><span class="f3">${f3}</span></span><span class="bx"><b>${f1(restXP(p,R.gi))}</b><small>GW${R.g}: ${f1(p.xpts[R.gi])}</small></span></button>`}).join("")||'<div class="note">Няма играчи в този бюджет.</div>'}</div>`;
+  } else if(SEL){const p=P[SEL];const inXI=R.xi.includes(SEL);
+    side=`<div class="sp-h"><div style="display:flex;gap:10px;align-items:center">${shirt(p.team,p.pos==="GKP",40)}<div><b style="font-size:17px">${esc(p.name)}</b><div class="note" style="margin:0">${tm(p.team)} · ${p.pos} · £${f1(p.price)} · ${f1(p.own)}%</div></div></div><button class="x" data-cancel="1" aria-label="Затвори">✕</button></div>
+     ${p.news?`<div class="warn" style="margin:8px 0">⚠ ${esc(p.news)}</div>`:""}
+     <div class="mini">${D.gws.map((g,k)=>`<div class="${k===R.gi?"cur":""}"><small>GW${g}</small><i style="background:${heat(p.xpts[k],1.5,6.5)}">${esc(fx(p,k).map(x=>x.opp+(x.h?"":"·г")).join("+")||"—")}</i><b>${f1(p.xpts[k])}</b></div>`).join("")}</div>
+     <div class="note">Форма ${f1(p.form)} · последни 5: ${p.form5.join(" / ")} · xG/90 ${f2(p.xg90)} · xA/90 ${f2(p.xa90)} · очаквани мин ${Math.round(p.xmin)}</div>
+     <div class="acts"><button class="btn danger" data-sell="${SEL}">Продай</button>${inXI&&R.cap!==SEL?`<button class="btn" data-cap="${SEL}">Направи капитан</button>`:""}${PLAN.cap[R.g]?`<button class="btn ghost" data-capauto="1">Капитан: автоматично</button>`:""}</div>`;
+  } else {
+    const mv=(PLAN.moves[R.g]||[]).filter(m=>m.out&&m.in);
+    side=`<div class="sp-h"><b style="font-size:16px">Трансфери в GW${R.g}</b></div>
+     ${mv.length?mv.map((m,k)=>`<div class="mvr"><span class="bad">↓ ${esc(P[m.out].name)}</span><span class="good">↑ ${esc(P[m.in].name)}</span><button class="x" data-undo="${k}" title="Отмени">↺</button></div>`).join(""):`<div class="note" style="margin:6px 0 10px">Натисни играч на терена, за да го продадеш, смениш капитана или видиш програмата му.</div>`}
+     <div class="ctrl" style="margin-top:10px"><label class="note" style="margin:0">Чип за GW${R.g}</label><select id="chip"><option value="">Без чип</option>${chipsAvail.map(c=>`<option value="${c}" ${R.chip===c?"selected":""}>${CHIPN[c]}</option>`).join("")}</select></div>
+     <div class="ctrl"><button class="btn ghost" id="psug">+ Най-добрият трансфер по модела</button><button class="btn ghost" id="preset">Нулирай GW${R.g}</button><button class="btn ghost" id="pclr">Изчисти всичко</button></div>
+     <div class="note"><b id="sync"></b></div>
+     <h3>AI оценка на плана</h3><div class="ctrl"><button id="pai" class="btn" style="display:none;background:var(--acc2);color:#062">Оцени плана</button><a id="pgo" class="btn" target="_blank" rel="noopener" style="text-decoration:none">Оцени в Claude →</a></div><div id="pmsg" class="note"></div><div id="pout" style="white-space:pre-wrap;font-size:14px;line-height:1.5"></div>`;
+  }
+  const vals=rows.flatMap(r=>[r.net,r.base]),maxT=Math.max(...vals,1),minT=Math.min(...vals)*0.85,hb=v=>Math.max(8,(v-minT)/(maxT-minT||1)*100);
   app.innerHTML=`${teamToggle()}
-  <div class="kpis">
-   <div class="kpi"><span>xP за ${D.gws.length} кръга с плана (след хитове)</span><b>${f1(totNet)}</b></div>
-   <div class="kpi"><span>Без трансфери</span><b>${f1(totBase)}</b></div>
-   <div class="kpi"><span>Разлика</span><b class="${totNet-totBase>0?'good':totNet-totBase<0?'bad':''}">${totNet-totBase>0?"+":""}${f1(totNet-totBase)}</b></div>
-   <div class="kpi"><span>Банка накрая</span><b>£${f1(rows[rows.length-1].bank)}</b></div>
-  </div><br>
-  ${errs.length?`<div class="card" style="border-color:var(--bad)">${errs.map(e=>`<div class="bad">✖ ${esc(e)}</div>`).join("")}</div>`:""}
-  <div class="card"><h2>Трансфери по кръгове</h2><datalist id="plp">${opts}</datalist>
-   ${rows.map(r=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>GW${r.g}</b> <span class="note">свободни: ${r.ft} · ${r.n?`${r.n} трансфер${r.n>1?"а":""}`:"без трансфер"}${r.hit?` · <span class="bad">−${r.hit}</span>`:""} · банка £${f1(r.bank)} · xP ${f1(r.tot)}</span>
-     ${(PLAN.moves[r.g]||[]).map((m,k)=>mvRow(r.g,m,k)).join("")}
-     <button data-add="${r.g}" class="pill" style="cursor:pointer;border:0;margin-top:4px">+ трансфер</button></div>`).join("")}
-   <div class="ctrl" style="margin-top:10px"><button id="pclr" class="pill" style="cursor:pointer;border:0">Изчисти плана</button>
-    <button id="psug" class="pill" style="cursor:pointer;border:0">Вземи най-добрия трансфер за GW${D.next_gw}</button></div>
-   <div class="note"><b id="sync"></b> · Цената за продажба е приблизително текущата. Свободните трансфери се натрупват до 5.</div></div>
-  <div class="card"><h2>Програма и xP на отбора по кръгове</h2><div class="scroll"><table><thead><tr><th class="l">Играч</th>${rows.map(r=>`<th>GW${r.g}</th>`).join("")}</tr></thead><tbody>
-   ${all.map(i=>`<tr><td class="l">${esc(P[i].name)} <span class="pill">${P[i].pos}</span></td>${rows.map(r=>cell(i,r)).join("")}</tr>`).join("")}
-   <tr><td class="l"><b>Отбор (XI + C)</b></td>${rows.map(r=>`<td><b>${f1(r.tot)}</b>${r.hit?`<br><span class="bad">−${r.hit}</span>`:""}</td>`).join("")}</tr>
-   <tr><td class="l" style="color:var(--mute)">Без трансфери</td>${rows.map(r=>`<td style="color:var(--mute)">${f1(r.base)}</td>`).join("")}</tr>
-  </tbody></table></div><div class="note">Всяка клетка показва съперника и очакваните точки, а цветът е колко е добър мачът за играча. Бледите са на пейката, (C) е капитанът. Стартовият състав и капитанът се избират автоматично за всеки кръг.</div></div>
-  <div class="card"><h2>AI оценка на плана</h2>
-   <div class="ctrl"><button id="pai" class="pill" style="display:none;cursor:pointer;background:var(--acc2);color:#062;padding:10px 16px;border:0">Оцени плана</button>
-   <a id="pgo" class="pill" target="_blank" rel="noopener" style="background:var(--acc);color:#fff;padding:10px 16px;text-decoration:none">Оцени в Claude →</a><span id="pmsg" class="note" style="margin:0"></span></div>
-   <div id="pout" style="white-space:pre-wrap;font-size:15px;line-height:1.55"></div></div>`;
+  <div class="plan-top">
+   <div class="gwnav"><button class="nb2" data-pg="${PG-1}" ${PG===0?"disabled":""} aria-label="Предишен кръг">‹</button><div><b>GW${R.g}</b><small>${R.chip?CHIPN[R.chip]:"&nbsp;"}</small></div><button class="nb2" data-pg="${PG+1}" ${PG===rows.length-1?"disabled":""} aria-label="Следващ кръг">›</button></div>
+   <div class="stat"><small>xP отбор</small><b>${f1(R.tot)}</b></div>
+   <div class="stat"><small>Свободни ТР</small><b>${R.chip==="wildcard"||R.chip==="freehit"?"∞":R.ft}</b></div>
+   <div class="stat"><small>Хит</small><b class="${R.hit?"bad":""}">${R.hit?"−"+R.hit:0}</b></div>
+   <div class="stat"><small>Банка</small><b class="${R.bank<0?"bad":""}">£${f1(R.bank)}</b></div>
+   <div class="stat"><small>${D.gws.length} кръга</small><b class="${totNet-totBase>=0?"good":"bad"}">${totNet-totBase>=0?"+":""}${f1(totNet-totBase)}</b></div>
+  </div>
+  <div class="strip">${rows.map((r,k)=>`<button data-pg="${k}" class="${k===PG?"on":""}"><span class="bars"><i style="height:${hb(r.base)}%" class="b0" title="без трансфери ${f1(r.base)}"></i><i style="height:${hb(r.net)}%" title="с плана ${f1(r.net)}"></i></span><small>GW${r.g}${r.chip?" ●":""}</small><b>${f1(r.net)}</b>${r.n?`<em>${r.n}ТР${r.hit?" −"+r.hit:""}</em>`:"<em>&nbsp;</em>"}</button>`).join("")}</div>
+  ${errs.length?`<div class="card" style="border-color:var(--bad);margin-top:10px">${[...new Set(errs)].map(e=>`<div class="bad">✖ ${esc(e)}</div>`).join("")}</div>`:""}
+  <div class="pl-wrap">
+   <div class="pitch-col"><div class="pitch">${lines}</div>
+    <div class="bench"><span class="bl1">Резерви${R.chip==="bboost"?" · Bench Boost":""}</span><div class="line">${R.bench.map(i=>card(i,true)).join("")}</div></div>
+    <div class="note">Стартовият състав и резервите се подреждат автоматично по очаквани точки за кръга. Под всеки играч са съперникът и очакваните точки, а цветът показва колко е добър мачът. ↑ значи купен в този кръг, ! значи съмнение за игра.</div></div>
+   <div class="side ${SEL||SELL?"open":""}"><div class="sheet">${side}</div></div>
+  </div>`;
   bindToggle();syncBadge();
   const redraw=()=>{savePlan();vPlan()};
-  app.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{const g=+b.dataset.add;(PLAN.moves[g]=PLAN.moves[g]||[]).push({out:null,in:null});redraw()});
-  app.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{PLAN.moves[+b.dataset.g].splice(+b.dataset.k,1);redraw()});
-  app.querySelectorAll("select[data-f]").forEach(el=>el.onchange=()=>{PLAN.moves[+el.dataset.g][+el.dataset.k].out=+el.value||null;redraw()});
-  app.querySelectorAll("input[data-f]").forEach(el=>el.onchange=()=>{const p=pfind(el.value);PLAN.moves[+el.dataset.g][+el.dataset.k].in=p?p.id:null;redraw()});
-  pclr.onclick=()=>{PLAN={base:D.next_gw,moves:{},ts:0};redraw()};
-  psug.onclick=()=>{const m=D.me.transfers.one[0];if(m){(PLAN.moves[D.next_gw]=PLAN.moves[D.next_gw]||[]).push({out:m.out[0],in:m.in[0]});redraw()}};
-  const prompt=()=>{const lines=rows.map(r=>`GW${r.g}: ${(PLAN.moves[r.g]||[]).filter(m=>m.out&&m.in).map(m=>`${P[m.out].name}→${P[m.in].name}`).join(", ")||"без трансфер"}; хит ${r.hit}; банка £${f1(r.bank)}; xP отбор ${f1(r.tot)} (без трансфери ${f1(r.base)}); капитан ${P[r.cap]?.name}`).join("\n");
-    const ins=[...new Set(Object.values(PLAN.moves).flat().filter(m=>m.in).map(m=>m.in))].map(i=>pctx(P[i])).join("\n");
-    return `Ти си опитен FPL играч. Оцени моя план за трансфери за следващите ${D.gws.length} кръга: силни страни, рискове (ротация, контузии, цени, програма), дали има по-добър ред на ходовете и дали хитовете си струват. Дай оценка от 1 до 10 и конкретни промени. Отговори кратко на български, без таблици.
-
-ПЛАН:
-${lines}
-Общо xP с плана ${f1(totNet)} срещу ${f1(totBase)} без трансфери.
-${errs.length?"Грешки в плана: "+errs.join("; "):""}
-Купувани играчи:
-${ins||"няма"}
-Моят текущ отбор: ${D.me.squad.map(i=>`${P[i].name} ${tm(P[i].team)} ${P[i].pos} £${f1(P[i].price)}${P[i].news?" ⚠"+P[i].news:""}`).join("; ")}. Банка £${f1(D.me.bank)}, свободни трансфери ${D.me.ft}, чипове до GW19: ${D.me.chips_left.map(c=>c.name).join(", ")||"няма"}.
-${AI?"Дневни AI изводи: "+AI.summary.slice(0,500):""}`};
-  const inFrame=(()=>{try{return window.top!==window}catch(e){return true}})();if(inFrame)pgo.removeAttribute("target");
-  pgo.href="https://claude.ai/new?q="+encodeURIComponent(prompt().slice(0,6000));
-  pgo.onclick=()=>{try{navigator.clipboard.writeText(prompt()).then(()=>{pmsg.textContent="Копирано ✓ — ако полето в Claude е празно, постави го."}).catch(()=>{})}catch(e){}};
-  (async()=>{try{if(!window.claude||!claude.use)return;const sample=await claude.use("sample");if(!sample)return;pai.style.display="";pgo.textContent="Отвори в нов разговор →";
-    pai.onclick=async()=>{pai.disabled=true;pout.textContent="Мисля…";try{const r=await sample(prompt(),{cache:false,onText:({text})=>{pout.textContent=text}});pout.textContent=r.text}catch(e){pout.textContent=e&&e.code==="rate_limited"?"Лимитът е достигнат — опитай по-късно.":"Грешка: "+(e&&e.message||e)}finally{pai.disabled=false}}}catch(e){}})();
+  app.querySelectorAll("[data-pg]").forEach(b=>b.onclick=()=>{PG=+b.dataset.pg;SEL=SELL=null;vPlan()});
+  app.querySelectorAll("[data-pid]").forEach(b=>b.onclick=()=>{const i=+b.dataset.pid;if(SELL){SELL=null}SEL=SEL===i?null:i;vPlan()});
+  app.querySelectorAll("[data-cancel]").forEach(b=>b.onclick=()=>{SEL=SELL=null;vPlan()});
+  app.querySelectorAll("[data-sell]").forEach(b=>b.onclick=()=>{SELL=+b.dataset.sell;SEL=null;BUYQ={q:"",sort:"rest",max:null};vPlan()});
+  app.querySelectorAll("[data-cap]").forEach(b=>b.onclick=()=>{PLAN.cap[R.g]=+b.dataset.cap;SEL=null;redraw()});
+  app.querySelectorAll("[data-capauto]").forEach(b=>b.onclick=()=>{delete PLAN.cap[R.g];redraw()});
+  app.querySelectorAll("[data-undo]").forEach(b=>b.onclick=()=>{PLAN.moves[R.g]=(PLAN.moves[R.g]||[]).filter(m=>m.out&&m.in);PLAN.moves[R.g].splice(+b.dataset.undo,1);redraw()});
+  app.querySelectorAll("[data-buy]").forEach(b=>b.onclick=()=>{const nid=+b.dataset.buy,g=R.g;const arr=(PLAN.moves[g]=(PLAN.moves[g]||[]).filter(m=>m.out&&m.in));
+    const prev=arr.find(m=>m.in===SELL);if(prev){if(prev.out===nid)arr.splice(arr.indexOf(prev),1);else prev.in=nid}else arr.push({out:SELL,in:nid});
+    SELL=null;SEL=null;redraw()});
+  const bq=document.getElementById("bq");if(bq){bq.oninput=e=>{BUYQ.q=e.target.value;vPlan();const el=document.getElementById("bq");el.focus();el.setSelectionRange(99,99)};
+    document.getElementById("bs").onchange=e=>{BUYQ.sort=e.target.value;vPlan()};document.getElementById("bm").onchange=e=>{BUYQ.max=+e.target.value||null;vPlan()}}
+  const chipSel=document.getElementById("chip");if(chipSel)chipSel.onchange=e=>{if(e.target.value)PLAN.chips[R.g]=e.target.value;else delete PLAN.chips[R.g];redraw()};
+  const ps=document.getElementById("psug");if(ps)ps.onclick=()=>{const cand=D.players.filter(p=>!R.squad.includes(p.id));let best=null;
+    R.squad.forEach(o=>{const po=P[o],budget=R.bank+po.price;const cnt={};R.squad.filter(i=>i!==o).forEach(i=>{cnt[P[i].team]=(cnt[P[i].team]||0)+1});
+      cand.forEach(c=>{if(c.pos!==po.pos||c.price>budget+1e-9||(cnt[c.team]||0)>=3)return;const g=restXP(c,R.gi)-restXP(po,R.gi);if(!best||g>best.g)best={g,o,c:c.id}})});
+    if(best){(PLAN.moves[R.g]=(PLAN.moves[R.g]||[]).filter(m=>m.out&&m.in)).push({out:best.o,in:best.c});redraw()}};
+  const pr=document.getElementById("preset");if(pr)pr.onclick=()=>{delete PLAN.moves[R.g];delete PLAN.chips[R.g];delete PLAN.cap[R.g];redraw()};
+  const pc=document.getElementById("pclr");if(pc)pc.onclick=()=>{PLAN={base:D.next_gw,moves:{},chips:{},cap:{},ts:0};PG=0;redraw()};
+  const pgo=document.getElementById("pgo");if(pgo){
+    const prompt=()=>{const lines=rows.map(r=>`GW${r.g}${r.chip?" ["+CHIPN[r.chip]+"]":""}: ${(PLAN.moves[r.g]||[]).filter(m=>m.out&&m.in).map(m=>`${P[m.out].name}→${P[m.in].name}`).join(", ")||"без трансфер"}; хит ${r.hit}; банка £${f1(r.bank)}; xP ${f1(r.tot)} (без трансфери ${f1(r.base)}); капитан ${P[r.cap]?.name}`).join("\n");
+      const ins=[...new Set(Object.values(PLAN.moves).flat().filter(m=>m&&m.in).map(m=>m.in))].map(i=>pctx(P[i])).join("\n");
+      return `Ти си опитен FPL играч. Оцени моя план за следващите ${D.gws.length} кръга: силни страни, рискове (ротация, контузии, цени, програма), по-добър ред на ходовете, дали хитовете и чиповете са на правилното място. Оценка 1–10 и конкретни промени. Кратко, на български, без таблици.\n\nПЛАН:\n${lines}\nОбщо xP с плана ${f1(totNet)} срещу ${f1(totBase)} без трансфери.\n${errs.length?"Грешки: "+[...new Set(errs)].join("; "):""}\nКупувани играчи:\n${ins||"няма"}\nТекущ отбор: ${D.me.squad.map(i=>`${P[i].name} ${tm(P[i].team)} ${P[i].pos} £${f1(P[i].price)}${P[i].news?" ⚠"+P[i].news:""}`).join("; ")}. Банка £${f1(D.me.bank)}, свободни ТР ${D.me.ft}, чипове до GW19: ${chipsAvail.join(", ")||"няма"}.\n${AI?"Дневни AI изводи: "+AI.summary.slice(0,500):""}`};
+    const inFrame=(()=>{try{return window.top!==window}catch(e){return true}})();if(inFrame)pgo.removeAttribute("target");
+    pgo.href="https://claude.ai/new?q="+encodeURIComponent(prompt().slice(0,6000));
+    pgo.onclick=()=>{try{navigator.clipboard.writeText(prompt()).then(()=>{pmsg.textContent="Копирано ✓ — ако полето в Claude е празно, постави го."}).catch(()=>{})}catch(e){}};
+    (async()=>{try{if(!window.claude||!claude.use)return;const sample=await claude.use("sample");if(!sample)return;pai.style.display="";pgo.textContent="Отвори в нов разговор →";
+      pai.onclick=async()=>{pai.disabled=true;pout.textContent="Мисля…";try{const r=await sample(prompt(),{cache:false,onText:({text})=>{pout.textContent=text}});pout.textContent=r.text}catch(e){pout.textContent=e&&e.code==="rate_limited"?"Лимитът е достигнат — опитай по-късно.":"Грешка: "+(e&&e.message||e)}finally{pai.disabled=false}}}catch(e){}})();
+  }
 }
 
 /* ---------------- My team */
