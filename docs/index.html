@@ -139,7 +139,7 @@ async function load(){
       for(const u of urls){try{const r=await fetch(u,{cache:"no-store"});if(r.ok){D=await r.json();break}}catch(e){}}}
     if(!D)throw new Error("няма данни");
   }catch(e){document.getElementById("meta").textContent="Грешка при зареждане на данните.";return}
-  if(!TEAM){try{const r=await fetch("ai.json",{cache:"no-store"});if(r.ok)AI=await r.json()}catch(e){}}
+  try{const r=await fetch(TEAM?`ai-${TEAM}.json`:"ai.json",{cache:"no-store"});if(r.ok)AI=await r.json()}catch(e){}
   P={};D.players.forEach(p=>P[p.id]=p);T=D.teams;
   const dl=D.deadline?new Date(D.deadline):null;
   if(TEAM){document.querySelector("h1").textContent="FPL Анализатор · "+D.me.name;document.title="FPL · "+D.me.name}
@@ -175,7 +175,7 @@ function vAdvice(){
     ${(AI.actions||[]).length?`<h3>Какво да направиш</h3><ol style="margin:0;padding-left:20px">${AI.actions.map(a=>`<li>${esc(a)}</li>`).join("")}</ol>`:""}
     ${(AI.players||[]).length?`<h3>Новини по играчи</h3><table><tbody>${AI.players.map(x=>`<tr><td class="l"><b>${esc(x.name)}</b></td><td class="l" style="white-space:normal">${esc(x.note)}</td><td class="l">${x.url&&/^https:\/\//.test(x.url)?`<a href="${esc(x.url)}" target="_blank" rel="noopener">източник</a>`:""}</td></tr>`).join("")}</tbody></table>`:""}
     <div class="note">Генерирано: ${fresh?fresh.toLocaleString("bg-BG"):"–"} · от Claude по новини, събрани с Firecrawl, и данните по-долу. Проверявай новините преди дедлайна.</div></div>`
-    :(TEAM?"":`<div class="card"><h2>AI изводи</h2><div class="note" style="margin:0">Още няма. Ще се появят след първото дневно пускане на AI задачата.</div></div>`);
+    :`<div class="card"><h2>AI изводи</h2><div class="note" style="margin:0">Още няма. Ще се появят след първото дневно пускане на AI задачата.</div></div>`;
   const col={good:"var(--acc2)",warn:"var(--warn)",bad:"var(--bad)",info:"var(--mute)"};
   app.innerHTML=ratingsCard()+aiBlock+`<div class="card"><h2>Съвети по правила (от модела)</h2>
    ${cats.map(c=>`<h3>${esc(c)}</h3>${D.advice.filter(a=>a.cat===c).map(a=>`<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)"><b style="color:${col[a.lvl]};width:14px;text-align:center">${ic[a.lvl]}</b><span>${esc(a.text)}</span></div>`).join("")}`).join("")}

@@ -581,8 +581,8 @@ def build_team(ME, league_ids, main):
                      "gap_to_1st": (L["members"][0]["total"] - next((m["total"] for m in L["members"] if m["entry"] == ME), 0)) if L["members"] else None}
                     for L in leagues],
     }
-    if main:
-        with open(os.path.join(ROOT, "docs", "digest.json"), "w", encoding="utf-8") as f:
+    if True:
+        with open(os.path.join(ROOT, "docs", "digest.json" if main else f"digest-{ME}.json"), "w", encoding="utf-8") as f:
             json.dump(digest, f, ensure_ascii=False, separators=(",", ":"))
 
     out = {
