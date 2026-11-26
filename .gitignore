@@ -2,3 +2,4 @@ raw/
 __pycache__/
 docs/data.json
 docs/digest.json
+docs/data-*.json

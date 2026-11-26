@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>FPL Анализатор</title>
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="manifest.json" id="mf">
+<script>(function(){var t=new URLSearchParams(location.search).get("team");if(t&&/^\d+$/.test(t)){document.getElementById("mf").href="manifest-"+t+".json"}})()</script>
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#37003c">
@@ -121,6 +122,7 @@ td.l,th.l{text-align:left}tr:hover td{background:var(--chip)}
 <script>
 const TABS=[["advice","Съвети"],["ask","Попитай AI"],["team","Моят отбор"],["cap","Капитан"],["players","Играчи"],["compare","Сравнение"],["fx","Програма"],["price","Цени"],["league","Минилиги"]];
 let D,P,T,AI=null,tab=location.hash.slice(1)||"advice";
+const TEAM=(()=>{const t=new URLSearchParams(location.search).get("team");return t&&/^\d+$/.test(t)?t:null})();
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const f1=x=>x==null?"–":(+x).toFixed(1), f2=x=>x==null?"–":(+x).toFixed(2);
 const tm=id=>T[id]?.short||"?";
@@ -133,13 +135,14 @@ function heat(v,lo,hi,rev){let t=Math.max(0,Math.min(1,(v-lo)/(hi-lo)));if(rev)t
 async function load(){
   try{
     if(window.FPL_DATA){D=window.FPL_DATA}
-    else{const urls=["data.json","https://alexseobg-hub.github.io/fpl-analyzer/data.json"];
+    else{const f=TEAM?`data-${TEAM}.json`:"data.json";const urls=[f,"https://alexseobg-hub.github.io/fpl-analyzer/"+f];
       for(const u of urls){try{const r=await fetch(u,{cache:"no-store"});if(r.ok){D=await r.json();break}}catch(e){}}}
     if(!D)throw new Error("няма данни");
   }catch(e){document.getElementById("meta").textContent="Грешка при зареждане на данните.";return}
-  try{const r=await fetch("ai.json",{cache:"no-store"});if(r.ok)AI=await r.json()}catch(e){}
+  if(!TEAM){try{const r=await fetch("ai.json",{cache:"no-store"});if(r.ok)AI=await r.json()}catch(e){}}
   P={};D.players.forEach(p=>P[p.id]=p);T=D.teams;
   const dl=D.deadline?new Date(D.deadline):null;
+  if(TEAM){document.querySelector("h1").textContent="FPL Анализатор · "+D.me.name;document.title="FPL · "+D.me.name}
   document.getElementById("meta").textContent=`Обновено: ${new Date(D.generated).toLocaleString("bg-BG")} · Следващ кръг GW${D.next_gw}`+(dl?` · Дедлайн: ${dl.toLocaleString("bg-BG",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}`:"");
   document.getElementById("tabs").innerHTML=TABS.map(([k,v])=>`<button data-k="${k}">${v}</button>`).join("");
   document.getElementById("tabs").onclick=e=>{if(e.target.dataset.k){tab=e.target.dataset.k;location.hash=tab;render()}};
@@ -172,7 +175,7 @@ function vAdvice(){
     ${(AI.actions||[]).length?`<h3>Какво да направиш</h3><ol style="margin:0;padding-left:20px">${AI.actions.map(a=>`<li>${esc(a)}</li>`).join("")}</ol>`:""}
     ${(AI.players||[]).length?`<h3>Новини по играчи</h3><table><tbody>${AI.players.map(x=>`<tr><td class="l"><b>${esc(x.name)}</b></td><td class="l" style="white-space:normal">${esc(x.note)}</td><td class="l">${x.url&&/^https:\/\//.test(x.url)?`<a href="${esc(x.url)}" target="_blank" rel="noopener">източник</a>`:""}</td></tr>`).join("")}</tbody></table>`:""}
     <div class="note">Генерирано: ${fresh?fresh.toLocaleString("bg-BG"):"–"} · от Claude по новини, събрани с Firecrawl, и данните по-долу. Проверявай новините преди дедлайна.</div></div>`
-    :`<div class="card"><h2>AI изводи</h2><div class="note" style="margin:0">Още няма. Ще се появят след първото дневно пускане на AI задачата.</div></div>`;
+    :(TEAM?"":`<div class="card"><h2>AI изводи</h2><div class="note" style="margin:0">Още няма. Ще се появят след първото дневно пускане на AI задачата.</div></div>`);
   const col={good:"var(--acc2)",warn:"var(--warn)",bad:"var(--bad)",info:"var(--mute)"};
   app.innerHTML=ratingsCard()+aiBlock+`<div class="card"><h2>Съвети по правила (от модела)</h2>
    ${cats.map(c=>`<h3>${esc(c)}</h3>${D.advice.filter(a=>a.cat===c).map(a=>`<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)"><b style="color:${col[a.lvl]};width:14px;text-align:center">${ic[a.lvl]}</b><span>${esc(a.text)}</span></div>`).join("")}`).join("")}
@@ -260,27 +263,28 @@ function teamToggle(){return `<div class="ctrl">${[["team","Отбор и тра
 function bindToggle(){app.querySelectorAll("[data-tv]").forEach(b=>b.onclick=()=>{TV=b.dataset.tv;vTeam()})}
 let PLAN=null;
 /* plan storage: localStorage everywhere + private per-user cloud copy when opened inside Claude */
+const PLANKEY="fpl-plan"+(new URLSearchParams(location.search).get("team")?"-"+new URLSearchParams(location.search).get("team"):"");
 const SYNC={ref:null,state:"local",busy:false,again:false,lastJson:""};
 function normPlan(x){if(!x||typeof x!=="object"||typeof x.moves!=="object")return null;const moves={};
   Object.entries(x.moves).forEach(([g,arr])=>{if(+g>=D.next_gw&&Array.isArray(arr))moves[g]=arr.filter(m=>m&&typeof m==="object").map(m=>({out:+m.out||null,in:+m.in||null}))});
   const chips={},cap={};Object.entries(x.chips||{}).forEach(([g,c])=>{if(+g>=D.next_gw&&CHIPN[c])chips[g]=c});Object.entries(x.cap||{}).forEach(([g,c])=>{if(+g>=D.next_gw&&+c)cap[g]=+c});
   return{base:D.next_gw,moves,chips,cap,ts:+x.ts||0}}
-function loadPlan(){if(PLAN)return;try{PLAN=normPlan(JSON.parse(localStorage.getItem("fpl-plan")||"null"))}catch(e){}if(!PLAN)PLAN={base:D.next_gw,moves:{},chips:{},cap:{},ts:0};}
+function loadPlan(){if(PLAN)return;try{PLAN=normPlan(JSON.parse(localStorage.getItem(PLANKEY)||"null"))}catch(e){}if(!PLAN)PLAN={base:D.next_gw,moves:{},chips:{},cap:{},ts:0};}
 async function pushRemote(){if(!SYNC.ref)return;if(SYNC.busy){SYNC.again=true;return}SYNC.busy=true;
   try{const body={plan:JSON.stringify(PLAN)};SYNC.lastJson=body.plan;await SYNC.ref.set(body);SYNC.state="synced"}catch(e){SYNC.state="error"}
   SYNC.busy=false;syncBadge();if(SYNC.again){SYNC.again=false;pushRemote()}}
 let pushT=null;
-function savePlan(){PLAN.ts=Date.now();try{localStorage.setItem("fpl-plan",JSON.stringify(PLAN))}catch(e){}
+function savePlan(){PLAN.ts=Date.now();try{localStorage.setItem(PLANKEY,JSON.stringify(PLAN))}catch(e){}
   if(SYNC.ref){SYNC.state="saving";clearTimeout(pushT);pushT=setTimeout(pushRemote,600)}}
 function syncBadge(){const el=document.getElementById("sync");if(!el)return;
   el.textContent={local:"Пази се само на това устройство",loading:"Синхронизиране…",saving:"Записване…",synced:"☁ Синхронизирано между устройствата",error:"⚠ Не можах да синхронизирам — пази се локално"}[SYNC.state]||""}
 async function initSync(){try{if(!window.claude||!claude.use)return;const [db,user]=await Promise.all([claude.use("db"),claude.use("user")]);if(!db||!user)return;
-  const uid=await user.id();if(!uid)return;SYNC.ref=db.doc("data/users/"+uid+"/plan");SYNC.state="loading";syncBadge();
+  const uid=await user.id();if(!uid)return;SYNC.ref=db.doc("data/users/"+uid+"/"+(TEAM?"plan-"+TEAM:"plan"));SYNC.state="loading";syncBadge();
   const t=setTimeout(()=>{if(SYNC.state==="loading"){SYNC.state="error";syncBadge()}},10000);
   SYNC.ref.onSnapshot(snap=>{clearTimeout(t);
     if(snap.exists){const raw=snap.data().plan;if(typeof raw==="string"&&raw!==SYNC.lastJson&&!snap.metadata.hasPendingWrites){
       let r=null;try{r=normPlan(JSON.parse(raw))}catch(e){}loadPlan();
-      if(r&&r.ts>=(PLAN.ts||0)){PLAN=r;try{localStorage.setItem("fpl-plan",JSON.stringify(PLAN))}catch(e){};SYNC.lastJson=raw;if(tab==="team"&&TV==="plan")vPlan()}
+      if(r&&r.ts>=(PLAN.ts||0)){PLAN=r;try{localStorage.setItem(PLANKEY,JSON.stringify(PLAN))}catch(e){};SYNC.lastJson=raw;if(tab==="team"&&TV==="plan")vPlan()}
       else if(r&&r.ts<(PLAN.ts||0))pushRemote();}}
     else{loadPlan();if(PLAN.ts)pushRemote()}
     if(!snap.metadata.fromCache&&SYNC.state==="loading")SYNC.state="synced";syncBadge()},
