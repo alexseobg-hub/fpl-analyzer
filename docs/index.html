@@ -47,6 +47,8 @@ td.l,th.l{text-align:left}tr:hover td{background:var(--chip)}
 .bar i{display:block;height:100%}
 .inj{opacity:.55}
 .card{overflow-x:auto}
+.stale{margin-top:10px;padding:9px 12px;border-radius:10px;background:#fff4e5;color:#7a4b00;font-size:13px}.stale a{color:inherit;font-weight:700}
+@media (prefers-color-scheme:dark){.stale{background:#3a2a10;color:#fdd38a}}
 .rcard .gs{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
 .gauge{display:flex;align-items:center;gap:12px}.gauge b{display:block;font-size:15px}.gauge small{color:var(--mute);font-size:12px}
 .rc{margin-top:10px;padding:10px 12px;background:var(--chip);border-radius:10px;font-size:14px}
@@ -143,6 +145,10 @@ async function load(){
   P={};D.players.forEach(p=>P[p.id]=p);T=D.teams;
   const dl=D.deadline?new Date(D.deadline):null;
   if(TEAM){document.querySelector("h1").textContent="FPL Анализатор · "+D.me.name;document.title="FPL · "+D.me.name}
+  {const age=(Date.now()-new Date(D.generated).getTime())/36e5;if(age>30){const b=document.createElement("div");b.className="stale";
+    const url="https://alexseobg-hub.github.io/fpl-analyzer/"+(TEAM?"?team="+TEAM:"");
+    b.innerHTML=`Данните тук са от ${esc(new Date(D.generated).toLocaleDateString("bg-BG"))}. Актуалната версия се обновява всяка нощ: <a href="${url}" target="_blank" rel="noopener">отвори я</a>.`;
+    document.querySelector("header").appendChild(b)}}
   document.getElementById("meta").textContent=`Обновено: ${new Date(D.generated).toLocaleString("bg-BG")} · Следващ кръг GW${D.next_gw}`+(dl?` · Дедлайн: ${dl.toLocaleString("bg-BG",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}`:"");
   document.getElementById("tabs").innerHTML=TABS.map(([k,v])=>`<button data-k="${k}">${v}</button>`).join("");
   document.getElementById("tabs").onclick=e=>{if(e.target.dataset.k){tab=e.target.dataset.k;location.hash=tab;render()}};
